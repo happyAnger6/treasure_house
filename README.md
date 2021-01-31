@@ -13,3 +13,6 @@ You can find more details introduction in below.
 
 ## 3.limit_protect 
 [limit_protect](./docs/limit_protect.md)
+
+## 4. references  
+[Linux reference](./references/linux_kernel_impl.md)
