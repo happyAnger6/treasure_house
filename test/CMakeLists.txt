@@ -3,6 +3,9 @@ aux_source_directory(./container TEST_FILES)
 
 add_executable(test_all ${TEST_FILES})
 
+target_include_directories(test_all PUBLIC
+                    ${PROJECT_SOURCE_DIR}/src/container)
+
 target_link_libraries(test_all PUBLIC
                     gtest
                     pthread)
