@@ -1,6 +1,9 @@
 #include <gtest/gtest.h>
+#include "list.h"
 
-TEST(CASE1, test_add)
+TEST(TEST_LIST, test_init)
 {
-    EXPECT_EQ(1 + 2, 3);
+    struct list_head lists;
+    INIT_LIST_HEAD(&lists);
+    ASSERT_TRUE(list_empty(&lists));
 }
