@@ -1,68 +1,58 @@
 #ifndef _TH_MEMPOOL_H
 #define _TH_MEMPOOL_H
 
-#include "treasure_house/spinlock.h"
+#include "list.h"
 
-#define MEMPOOL_CONSIST_CHECKS 0x00000100UL
-#define MEMPOOL_RED_ZONE 0x00000400UL
-#define MEMPOOL_POSION 0x00000800UL
-#define MEMPOOL_HWCACHE_ALIGN 0x00002000UL
 
-typedef struct th_mempool_s{
-	struct list_head        mem_block_full;
-   	struct list_head        mem_block_partial;
-   	struct list_head        mem_block_free;
-    unsigned int            objsize;
-    unsigned int            flags;
-    unsigned int            num;
-	spinlock_t 				spinlock;	
-	unsigned int 			order;
-	unsigned int 			flags;
-	size_t 					color;
-	unsigned int 			color_off;
-	unsigned int 			color_next;
-	struct th_mempool_s     *mempool_next_p;
-	unsigned int 			growing;
-	unsigned int 			dflags;
-	void (*ctor)(void *, th_mempool_t *, unsigned long);
-	void (*dtor)(void *, th_mempool_t *, unsigned long);
-	unsigned long           failures;
-}th_mempool_t;
+#define SLAB_CONSISTENCY_CHECKS	0x00000100UL	/* DEBUG: Perform (expensive) checks on alloc/free */
+#define SLAB_RED_ZONE		0x00000400UL	/* DEBUG: Red zone objs in a cache */
+#define SLAB_POISON		0x00000800UL	/* DEBUG: Poison objects */
+#define SLAB_HWCACHE_ALIGN	0x00002000UL	/* Align objs on cache lines */
+#define SLAB_CACHE_DMA		0x00004000UL	/* Use GFP_DMA memory */
+#define SLAB_STORE_USER		0x00010000UL	/* DEBUG: Store the last owner for bug hunting */
+#define SLAB_PANIC		0x00040000UL	/* Panic if kmem_cache_create() fails */
+#define SLAB_CORE_FLAGS SLAB_HWCACHE_ALIGN 
 
-typedef void* th_mempool_handle;
-typedef unsigned int mem_bufctl_t;
+#define CACHE_CREATE_MASK (SLAB_CORE_FLAGS)
 
-typedef struct th_memblock_s {
+struct mempool_cache_node {
+	struct list_head slabs_partial;	/* partial list first, better asm code */
+	struct list_head slabs_full;
+	struct list_head slabs_free;
+	unsigned long num_slabs;
+	unsigned long free_objects;
+	unsigned int free_limit;
+	unsigned int colour_next;	/* Per-node cache coloring */
+	unsigned long next_reap;	/* updated without locking */
+	int free_touched;		/* updated without locking */
+};
+
+struct mempool {
+	unsigned int size;
+/* 2) touched by every alloc & free from the backend */
+	unsigned int flags;		/* constant flags */
+	unsigned int num;		/* # of objs per slab */
+
+/* 3) cache_grow/shrink */
+	/* order of pgs per slab (2^n) */
+	unsigned int order;
+
+	size_t colour;			/* cache colouring range */
+	unsigned int colour_off;	/* colour offset */
+
+	struct mempool *freelist_cache;
+	unsigned int freelist_size;
+
+	/* constructor func */
+	void (*ctor)(void *obj);
+
+/* 4) cache creation/removal */
+	const char *name;
 	struct list_head list;
-	unsigned long color_off;
-	void *object_mem;
-	unsigned int inuse;
-	mem_bufctl_t free[];
-}th_memblock_t;
+	int refcount;
+	int object_size;
+	int align;
+	struct mempool_cache_node node;
+};
 
-#define memblock_bufctl(mblock_p)	\
-		((mem_bufctl_t *)(((th_memblock_t *)mblock_p) + 1))
-
-/* Create a new mempool */
-th_mempool_t* th_mempool_create(const char *name, size_t size,
-    size_t align, unsigned long flags,
-    void (*ctor)(void*, th_mempool_t*, unsigned long),
-    void (*dtor)(void*, th_mempool_t*, unsigned long));
-
-
-/* Delete all mempool_block in the free list*/
-th_mempool_shrink(th_mempool_t *mempool_p);
-
-/* Allocate a single object from the mempool and return it to the caller */
-void* th_mempool_alloc(th_mempool_t *mempool_p);
-
-/* Free an object from the mempool and return it to the mempool */
-void th_mempool_free(th_mempool_t *mempool_p, void *obj_p);
-
-/* Destory all objects in all mempool_block and frees up all associated memory */
-int th_mempool_destory(th_mempool_t *mempool_p);
-
-int th_mempool_reap(int mask);
-
-    
 #endif
