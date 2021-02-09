@@ -1,6 +1,6 @@
-#include "../include/types.h"
-#include "../include/list.h"
-#include "../include/error.h"
+#include "types.h"
+#include "list.h"
+#include "error.h"
 
 #include "mempool.h"
 

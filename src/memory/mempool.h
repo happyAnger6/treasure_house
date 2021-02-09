@@ -1,7 +1,7 @@
 #ifndef _TH_MEMPOOL_H
 #define _TH_MEMPOOL_H
 
-#include "../list.h"
+#include "list.h"
 
 
 #define SLAB_CONSISTENCY_CHECKS	0x00000100UL	/* DEBUG: Perform (expensive) checks on alloc/free */
