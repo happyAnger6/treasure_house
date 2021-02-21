@@ -21,8 +21,11 @@ typedef unsigned gfp_t;
 #define __ALIGN(x, a)		__ALIGN_MASK(x, (typeof(x))(a) - 1)
 #define __ALIGN_MASK(x, mask)	(((x) + (mask)) & ~(mask))
 #define ALIGN(x, a) __ALIGN((x), (a))
+#define ALIGN_ADDR(addr, align) ALIGN(((unsigned long)addr), align)
 
 #define max(x, y)      \
     (x) > (y) ? (x) : (y)
 
+#define __always_inline	inline __attribute__((always_inline))
+#define  noinline	__attribute__((noinline))
 #endif

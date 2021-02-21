@@ -9,3 +9,8 @@ target_include_directories(test_all PUBLIC
 target_link_libraries(test_all PUBLIC
                     gtest
                     pthread)
+
+add_test(
+    NAME google_test
+    COMMAND $<TARGET_FILE:test_all>
+)

@@ -2,57 +2,56 @@
 #define _TH_MEMPOOL_H
 
 #include "list.h"
+#define SLAB_OBJ_MIN_SIZE 32
 
+typedef unsigned short freelist_idx_t
 
-#define SLAB_CONSISTENCY_CHECKS	0x00000100UL	/* DEBUG: Perform (expensive) checks on alloc/free */
-#define SLAB_RED_ZONE		0x00000400UL	/* DEBUG: Red zone objs in a cache */
-#define SLAB_POISON		0x00000800UL	/* DEBUG: Poison objects */
-#define SLAB_HWCACHE_ALIGN	0x00002000UL	/* Align objs on cache lines */
-#define SLAB_CACHE_DMA		0x00004000UL	/* Use GFP_DMA memory */
-#define SLAB_STORE_USER		0x00010000UL	/* DEBUG: Store the last owner for bug hunting */
-#define SLAB_PANIC		0x00040000UL	/* Panic if kmem_cache_create() fails */
-#define SLAB_CORE_FLAGS SLAB_HWCACHE_ALIGN 
+struct slab {
+	struct list_head list;
+	void *s_base;
+    void *obj_base;            /* slab first object */
+	short free_idx;
+	unsigned short total;
+	unsigned short used;
+	unsigned short free;
+    freelist_idx_t freelist[0];     /* sl[aou]b first free object */
+};
 
-#define CACHE_CREATE_MASK (SLAB_CORE_FLAGS)
-
-struct mempool_cache_node {
-	struct list_head slabs_partial;	/* partial list first, better asm code */
-	struct list_head slabs_full;
-	struct list_head slabs_free;
-	unsigned long num_slabs;
+struct slabs_info{
+	struct list_head partial_list;	/* partial list first, better asm code */
+	struct list_head full_list;
+	struct list_head free_list;
+	struct slab *cur_slab;
+	unsigned long slab_nums;
 	unsigned long free_objects;
-	unsigned int free_limit;
-	unsigned int colour_next;	/* Per-node cache coloring */
-	unsigned long next_reap;	/* updated without locking */
-	int free_touched;		/* updated without locking */
+};
+
+struct mempool_ops {
+	int (*ctor)(void *obj, void *private, int flags);
+	int (*dctor)(void *obj, void *private);
+	void (*reclaim)(void *private);
 };
 
 struct mempool {
-	unsigned int size;
-/* 2) touched by every alloc & free from the backend */
-	unsigned int flags;		/* constant flags */
-	unsigned int num;		/* # of objs per slab */
-
-/* 3) cache_grow/shrink */
-	/* order of pgs per slab (2^n) */
-	unsigned int order;
-
-	size_t colour;			/* cache colouring range */
-	unsigned int colour_off;	/* colour offset */
-
-	struct mempool *freelist_cache;
-	unsigned int freelist_size;
-
-	/* constructor func */
-	void (*ctor)(void *obj);
-
-/* 4) cache creation/removal */
+	struct list_head pool_list;
 	const char *name;
-	struct list_head list;
-	int refcount;
+	unsigned int size;
 	int object_size;
 	int align;
-	struct mempool_cache_node node;
+	unsigned int flags;		/* constant flags */
+	unsigned int num;		/* # of objs per slab */
+	unsigned int order;
+	int refcount;
+	struct mempool_ops *ops;
+	struct slabs_info slabs;
 };
 
+extern struct mempool* mempool_create(const char *name, size_t obj_size,
+				size_t align,
+				mempool_ops *ops_p,
+				void *private, int flags);
+
+extern void* mempool_alloc(struct mempool* mempool_p, int flags);
+extern void* mempool_free(struct mempool* mempool_p, void *obj);
+extern void mempool_destory(struct mempool* mempool_p);
 #endif
