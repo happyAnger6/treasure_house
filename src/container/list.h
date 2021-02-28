@@ -9,6 +9,11 @@
 #ifndef LIST_H_
 #define LIST_H_
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
+
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -1089,5 +1094,9 @@ static inline void hlist_move_list(struct hlist_head *old,
     for (pos = hlist_entry_safe((head)->first, typeof(*pos), member);\
          pos && ({ n = pos->member.next; 1; });         \
          pos = hlist_entry_safe(n, typeof(*pos), member))
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

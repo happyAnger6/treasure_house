@@ -4,6 +4,8 @@ project(treasure_house)
 
 add_subdirectory(src)
 
+set(PROJECT_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
+
 # we will use the network to fetch Google Test sources
 # make it possible to disable unit tests when not on network
 option(ENABLE_UNIT_TESTS "Enable unit tests" ON)

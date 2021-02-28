@@ -1,10 +1,14 @@
 #ifndef _TH_MEMPOOL_H
 #define _TH_MEMPOOL_H
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 #include "list.h"
 #define SLAB_OBJ_MIN_SIZE 32
 
-typedef unsigned short freelist_idx_t
+typedef unsigned short freelist_idx_t;
 
 struct slab {
 	struct list_head list;
@@ -18,25 +22,25 @@ struct slab {
 };
 
 struct slabs_info{
-	struct list_head partial_list;	/* partial list first, better asm code */
-	struct list_head full_list;
-	struct list_head free_list;
-	struct slab *cur_slab;
-	unsigned long slab_nums;
-	unsigned long free_objects;
+	struct list_head partials;	/* partial list first, better asm code */
+	struct list_head fulls;
+	struct list_head frees;
+	struct slab *cur;
+	unsigned long nums;
+	unsigned long free_objs;
 };
 
 struct mempool_ops {
-	int (*ctor)(void *obj, void *private, int flags);
-	int (*dctor)(void *obj, void *private);
-	void (*reclaim)(void *private);
+	int (*ctor)(void *obj, void *priv, int flags);
+	int (*dctor)(void *obj, void *priv);
+	void (*reclaim)(void *priv);
 };
 
 struct mempool {
 	struct list_head pool_list;
 	const char *name;
 	unsigned int size;
-	int object_size;
+	int obj_size;
 	int align;
 	unsigned int flags;		/* constant flags */
 	unsigned int num;		/* # of objs per slab */
@@ -46,12 +50,16 @@ struct mempool {
 	struct slabs_info slabs;
 };
 
-extern struct mempool* mempool_create(const char *name, size_t obj_size,
-				size_t align,
-				mempool_ops *ops_p,
-				void *private, int flags);
+extern struct mempool *mempool_create(const char *name, size_t obj_size,
+				size_t align, struct mempool_ops *opsp,
+				void *priv, unsigned long flags);
 
-extern void* mempool_alloc(struct mempool* mempool_p, int flags);
+extern void* mempool_alloc(struct mempool* mempool_p, unsigned long flags);
 extern void* mempool_free(struct mempool* mempool_p, void *obj);
 extern void mempool_destory(struct mempool* mempool_p);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

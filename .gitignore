@@ -6,6 +6,9 @@ build/
  Prerequisites
 *.d
 
+# ctest
+/Testing
+
 # Object files
 *.o
 *.ko
