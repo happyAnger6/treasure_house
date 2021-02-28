@@ -7,6 +7,7 @@ extern "C"{
 
 #include "list.h"
 #define SLAB_OBJ_MIN_SIZE 32
+#define SLAB_OBJ_MIN_NUM 8
 
 typedef unsigned short freelist_idx_t;
 
@@ -15,16 +16,15 @@ struct slab {
 	void *s_base;
     void *obj_base;            /* slab first object */
 	short free_idx;
-	unsigned short total;
 	unsigned short used;
 	unsigned short free;
     freelist_idx_t freelist[0];     /* sl[aou]b first free object */
 };
 
 struct slabs_info{
-	struct list_head partials;	/* partial list first, better asm code */
-	struct list_head fulls;
-	struct list_head frees;
+	struct list_head partial;	/* partial list first, better asm code */
+	struct list_head full;
+	struct list_head empty;
 	struct slab *cur;
 	unsigned long nums;
 	unsigned long free_objs;
@@ -43,7 +43,7 @@ struct mempool {
 	int obj_size;
 	int align;
 	unsigned int flags;		/* constant flags */
-	unsigned int num;		/* # of objs per slab */
+	unsigned int num_per_slab;		/* # of objs per slab */
 	unsigned int order;
 	int refcount;
 	struct mempool_ops *ops;

@@ -25,7 +25,7 @@ typedef unsigned gfp_t;
 #define __ALIGN(x, a)		__ALIGN_MASK(x, (typeof(x))(a) - 1)
 #define __ALIGN_MASK(x, mask)	(((x) + (mask)) & ~(mask))
 #define ALIGN(x, a) __ALIGN((x), (a))
-#define ALIGN_ADDR(addr, align) ALIGN(((long)(addr)), align)
+#define ALIGN_ADDR(addr, align) ALIGN(((intptr_t)(addr)), align)
 
 #define max(x, y)      \
     (x) > (y) ? (x) : (y)

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #include "types.h"
 #include "list.h"
@@ -113,12 +114,12 @@ static size_t calculate_slab_order(struct mempool *mempoolp,
         if (!num)
             continue;
 
-        /* Can't handle number of objects more than SLAB_OBJ_MAX_NUM 
-        if (num > SLAB_OBJ_MAX_NUM)
-            break; */
+        /* Can't handle number of objects more than SLAB_OBJ_MAX_NUM */
+        if (num < SLAB_OBJ_MIN_NUM)
+            continue; 
 
         /* Found something acceptable - save it away */
-        mempoolp->num = num;
+        mempoolp->num_per_slab = num;
         mempoolp->order = order;
         left_over = remainder;
 
@@ -131,26 +132,26 @@ static size_t calculate_slab_order(struct mempool *mempoolp,
     return left_over;
 }
 
-static bool set_off_slab_mempool(struct mempool *poolp, size_t size, unsigned long flags)
+static bool set_off_slab_mempool(struct mempool *pool, size_t size, unsigned long flags)
 {
-    poolp->num = 0;
+    pool->num_per_slab = 0;
 
-    calculate_slab_order(poolp, size, flags);
-    if(!poolp->num){
+    calculate_slab_order(pool, size, flags);
+    if (!pool->num_per_slab) {
         return false;
     }
 
     return true;
 }
 
-static void init_slabs_info(struct mempool *poolp)
+static void init_slabs_info(struct slabs_info *slabs)
 {
-    INIT_LIST_HEAD(&(poolp->slabs.fulls));
-    INIT_LIST_HEAD(&(poolp->slabs.partials));
-    INIT_LIST_HEAD(&(poolp->slabs.frees));
-    poolp->slabs.cur= NULL;
-    poolp->slabs.nums = 0;
-    poolp->slabs.free_objs = 0;
+    INIT_LIST_HEAD(&slabs->full);
+    INIT_LIST_HEAD(&slabs->partial);
+    INIT_LIST_HEAD(&slabs->empty);
+    slabs->cur = NULL;
+    slabs->nums = 0;
+    slabs->free_objs = 0;
 }
 
 struct mempool* mempool_create(const char *name, size_t obj_size,
@@ -159,18 +160,18 @@ struct mempool* mempool_create(const char *name, size_t obj_size,
 {
     struct mempool* pool;
     
-    if(NULL == name)
+    if (NULL == name)
     {
         return NULL;
     }
 
-    if(NULL != find_mempool_by_name(name))
+    if (NULL != find_mempool_by_name(name))
     {
         return NULL;
     }
 
     pool = (struct mempool *)calloc(1, sizeof(struct mempool));
-    if(NULL == pool)
+    if (NULL == pool)
     {
         return NULL;
     }
@@ -188,37 +189,61 @@ struct mempool* mempool_create(const char *name, size_t obj_size,
 
 	pool->refcount = 1;
 	list_add(&pool->pool_list, &mempool_list);
+    init_slabs_info(&pool->slabs);
     return pool;
 }
 
-static __always_inline void *
+static void init_freelist(freelist_idx_t *free_list, size_t num)
+{
+    for(size_t i = 0; i < num - 1; i++)
+    {
+        free_list[i] = i + 1;
+    }
+    free_list[num-1] = -1;
+}
+
+static __always_inline struct slab *
 slab_alloc(struct mempool *mempoolp, unsigned long flags)
 {
-    unsigned int order = mempoolp->order;
-    size_t slab_size = PAGE_SIZE << order;
-    struct slab *slab = calloc(1, sizeof(struct slab));
-    if(!slab)
+    size_t num = mempoolp->num_per_slab;
+    size_t slab_size = PAGE_SIZE << mempoolp->order;
+    struct slabs_info *slabs = &mempoolp->slabs;
+    struct slab *slab = calloc(1, slab_size + num * sizeof(freelist_idx_t));
+    if (!slab)
     {
         return NULL;
     }
 
     void *base = malloc(slab_size);
-    if(!base)
+    if (!base)
     {
-        free(slab);
-        return NULL;
+        goto out_free_slab;
     }
 
+    init_freelist(slab->freelist, num);
     void *obj_base = ALIGN_ADDR(base, mempoolp->align);
     slab->s_base = base;
     slab->obj_base = obj_base;
+    slab->free = num;
+    slab->used = 0;
+    slab->free_idx = 0;
+
+    list_add(&slab->list, &slabs->empty);
+    slabs->nums += 1;
+    slabs->free_objs += num;
+    slabs->cur = slab;
+    return slab;
+
+out_free_slab:
+    free(slab);
+    return NULL;
 }
 
 static struct slab *load_slab(struct mempool *mempoolp)
 {
     struct slab *slab = NULL;
     struct slabs_info *slabs = &mempoolp->slabs;
-    list_for_each_entry(slab, &slabs->partials, list) {
+    list_for_each_entry(slab, &slabs->partial, list) {
         if(slab->free > 0){
             return slab;
         }
@@ -227,19 +252,31 @@ static struct slab *load_slab(struct mempool *mempoolp)
     return NULL;
 }
 
-static void *find_slab(struct mempool *mempoolp)
+static void *find_slab(struct slabs_info *slabs)
 {
-    struct slab *slab = (mempoolp->slabs).cur;
-    struct slabs_info *slabs = &mempoolp->slabs;
+    struct slab *slab = slabs->cur;
 
     if (slab->free == 0)
     {
-        MOVE_SLAB_LIST(slab, &slabs->fulls);
-        slab = NULL;
-        slab = load_slab(mempoolp);
+        slab = load_slab(slabs);
     }
 
     return slab;
+}
+
+static void *alloc_obj_from_slab(struct slab *slab, struct mempool *pool)
+{
+    short free_idx = slab->free_idx;
+    assert(free_idx != -1);
+
+    slab->free_idx = slab->freelist[slab->free_idx];
+    slab->free -= 1;
+    slab->used += 1;
+    if (slab->free == 0) {
+        MOVE_SLAB_LIST(slab, &((pool->slabs).full));
+    }
+
+    return slab->obj_base + free_idx * pool->size;
 }
 
 /**
@@ -254,14 +291,28 @@ void *mempool_alloc(struct mempool *mempoolp, unsigned long flags)
 {
     struct slabs_info *slabs = &mempoolp->slabs;
     struct slab *slab = NULL;
-    void *ret = NULL;
+    void *obj = NULL;
 
-    if(slabs->free_objs == 0){
-        ret = slab_alloc(mempoolp, flags);
+    if (slabs->free_objs == 0)
+    {
+        slab = slab_alloc(mempoolp, flags);
+        if (!slab) {
+            return NULL;
+        }
+        goto find_slab;
     }
 
-    slab = find_slab(mempoolp);
+    slab = find_slab(slabs);
+    if (!slab) {
+        return NULL;
+    }
 
+find_slab:
+    obj = alloc_obj_from_slab(slab, mempoolp);
+    if (obj) {
+        slabs->free_objs -= 1;
+    }
+    return obj;
 }
 
 void mempool_destory(struct mempool* mempool_p)
