@@ -22,16 +22,16 @@ typedef unsigned gfp_t;
 #define BYTES_PER_WORD      sizeof(void *)
 #define BITS_PER_BYTE 8
 
-#define __ALIGN(x, a)		__ALIGN_MASK(x, (typeof(x))(a) - 1)
-#define __ALIGN_MASK(x, mask)	(((x) + (mask)) & ~(mask))
+#define __ALIGN_MASK(x, mask)   (((x) + (mask)) & ~(mask))
+#define __ALIGN(x, a)       __ALIGN_MASK(x, (typeof(x))(a) - 1)
 #define ALIGN(x, a) __ALIGN((x), (a))
-#define ALIGN_ADDR(addr, align) ALIGN(((intptr_t)(addr)), align)
+#define ALIGN_ADDR(addr, align) \
+    (typeof(addr))(ALIGN(((intptr_t)(addr)), align))
 
 #define max(x, y)      \
     (x) > (y) ? (x) : (y)
 
-#define __always_inline	inline __attribute__((always_inline))
-#define  noinline	__attribute__((noinline))
+#define  noinline   __attribute__((noinline))
 
 #ifdef __cplusplus
 }
