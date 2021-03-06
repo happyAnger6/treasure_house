@@ -59,4 +59,15 @@ build/
 modules.order
 Module.symvers
 Mkfile.old
-dkms.conf
+dkms.conf*.IAB
+\*.IAB
+*.IAB
+*.IAD
+*.IMB
+*.IMd
+*.IMD
+*.PO
+*.PR
+*.PRI
+*.PS
+*.PFI

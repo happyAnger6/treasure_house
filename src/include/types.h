@@ -31,6 +31,8 @@ typedef unsigned gfp_t;
 #define max(x, y)      \
     (x) > (y) ? (x) : (y)
 
+#define MIN(a, b) ((a)<(b) ? (a):(b))
+
 #define  noinline   __attribute__((noinline))
 
 #ifdef __cplusplus
