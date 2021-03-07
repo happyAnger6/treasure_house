@@ -4,6 +4,7 @@ set(CONTAINER_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/container)
 aux_source_directory(memory SRCS)
 aux_source_directory(container SRCS)
 aux_source_directory(threadpool SRCS)
+aux_source_directory(queue SRCS)
 
 add_library(treasure_house STATIC ${SRCS})
 

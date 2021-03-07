@@ -111,7 +111,7 @@ struct threadpool *threadpool_create(int max_threads)
     struct workqueue *queue = NULL;
     int thread_num;
 
-    thread_num = MIN(get_cpu_num() * 2, max_threads);
+    thread_num = MIN(get_cpu_num() * 3, max_threads);
     pool = (struct threadpool *)malloc(sizeof(struct threadpool) + sizeof(pthread_t) * thread_num);
     if (pool == NULL)
         return NULL;

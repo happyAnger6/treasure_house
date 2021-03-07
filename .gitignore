@@ -72,3 +72,5 @@ dkms.conf*.IAB
 *.PS
 *.PFI
 *.WK3
+.SearchResults
+s_myprojs.SearchResults

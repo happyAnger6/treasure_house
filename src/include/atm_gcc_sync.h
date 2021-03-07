@@ -5,6 +5,8 @@
 extern "C"{
 #endif
 
+#include <stdint.h>
+
 typedef intptr_t atm_t;
 
 #define ATM_COMPILE_BARRIER_() __asm__ __volatile__("" : : : "memory")
@@ -14,11 +16,13 @@ typedef intptr_t atm_t;
 #if defined(__i386) || defined(__x86_64__)
 /* All loads are acquire loads and all stores are release stores.  */
 #define ATM_LS_BARRIER_() ATM_COMPILE_BARRIER_()
+#define TH_CACHELINE_SIZE_LOG 6
+
 #else
 #define ATM_LS_BARRIER_() atm_full_barrier()
 #endif
 
-
+#define TH_CACHELINE_SIZE (1 << TH_CACHELINE_SIZE_LOG)
 
 static __inline atm_t atm_acq_load(const atm_t *p) {
   atm_t value = *p;

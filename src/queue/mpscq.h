@@ -5,6 +5,8 @@
 extern "C"{
 #endif
 
+#include <stdio.h>
+
 /* Multiple-producer single-consumer lock free queue, based upon the
 * implementation from Dmitry Vyukov here:
 * http://www.1024cores.net/home/lock-free-algorithms/queues/intrusive-mpsc-node-based-queue
@@ -29,26 +31,31 @@ Disadvantages:
 * fields after it - to simulate inheritance)
 */
 
-struct mpscq_node_t
+struct mpscq_node
 {
-    mpscq_node_t* volatile  next;
-
+    struct mpscq_node* volatile  next;
 };
 
-struct mpscq_t
+struct mpscq
 {
-    mpscq_node_t* volatile  head;
-    mpscq_node_t*           tail;
-    mpscq_node_t            stub;
-
+    union {
+        char padding[TH_CACHELINE_SIZE];
+        struct mpscq_node* volatile  head;
+    };
+    struct mpscq_node *tail;
+    struct mpscq_node stub;
 };
 
 #define MPSCQ_STATIC_INIT(self) {&self.stub, &self.stub, {NULL}}
 
-void mpscq_create(mpscq_t* self);
+void mpscq_create(struct mpscq *self);
 
-void mpscq_push(mpscq_t* self, mpscq_node_t* n);
+void mpscq_push(struct mpscq *self, struct mpscq_node *n);
 
-mpscq_node_t* mpscq_pop(mpscq_t* self);
+struct mpscq_node *mpscq_pop(struct mpscq *self);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
