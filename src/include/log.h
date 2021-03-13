@@ -16,19 +16,18 @@ enum {
     LOG_LEVEL_OFF
 };
 
-void log_init();
 void log_set_level(int level);
-void log_set_level_one(int level);
+void log_set_level_one(int level, int flag);
 void log_set_logfile(int level, const char *pathname);
 void log_set_format(const char *fmt);
-void log_log(int level, const char *format, ...);
+void log_log(int level, const char *filename, int lineno, const char *format, ...);
 
-#define log_trace(...)      log_log(LOG_LEVEL_TRACE, __VA_ARGS__)
-#define log_debug(...)      log_log(LOG_LEVEL_DEBUG, __VA_ARGS__)
-#define log_info(...)       log_log(LOG_LEVEL_INFO, __VA_ARGS__)
-#define log_warning(...)    log_log(LOG_LEVEL_WARNING, __VA_ARGS__)
-#define log_error(...)      log_log(LOG_LEVEL_ERROR, __VA_ARGS__)
-#define log_fatal(...)      log_log(LOG_LEVEL_FATAL, __VA_ARGS__)
+#define log_trace(...)      log_log(LOG_LEVEL_TRACE, __FILE__, __LINE__, __VA_ARGS__)
+#define log_debug(...)      log_log(LOG_LEVEL_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
+#define log_info(...)       log_log(LOG_LEVEL_INFO, __FILE__, __LINE__, __VA_ARGS__)
+#define log_warning(...)    log_log(LOG_LEVEL_WARNING, __FILE__, __LINE__, __VA_ARGS__)
+#define log_error(...)      log_log(LOG_LEVEL_ERROR, __FILE__, __LINE__, __VA_ARGS__)
+#define log_fatal(...)      log_log(LOG_LEVEL_FATAL, __FILE__, __LINE__, __VA_ARGS__)
 
 #ifdef __cpluscplus
 }
