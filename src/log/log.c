@@ -6,9 +6,33 @@
 #include <stdarg.h>
 #include <time.h>
 
-static int log_level[LOG_LEVEL_OFF];
-static const char *log_file[LOG_LEVEL_OFF];
-static const char *log_fmt = "[%F %T] ";
+#ifdef DEBUG
+#define static 
+#endif
+
+static int log_level[LOG_LEVEL_OFF] = { 0, 0, 0, 0, 1, 1 };
+static const char *log_file[LOG_LEVEL_OFF] = { "/dev/stdout", "/dev/stdout", "/dev/stdout", "/dev/stdout", "/dev/stdout", "/dev/stdout" };
+static const char *log_fmt = "[%F %T] %L: ";
+
+static const char *level_to_string(int level)
+{
+    switch (level) {
+    case LOG_LEVEL_TRACE:
+        return "TRACE";
+    case LOG_LEVEL_DEBUG:
+        return "DEBUG";
+    case LOG_LEVEL_INFO:
+        return "INFO";
+    case LOG_LEVEL_WARNING:
+        return "WARNING";
+    case LOG_LEVEL_ERROR:
+        return "ERROR";
+    case LOG_LEVEL_FATAL:
+        return "FATAL";
+    default:
+        return NULL;
+    }
+}
 
 static int log_get_time_fmt(char format, char *str, int len)
 {
@@ -46,7 +70,7 @@ static int log_get_time_fmt(char format, char *str, int len)
     return ret < len - 1 ? ret : len - 1;
 }
 
-static void log_fmt_tostring(const char *fmt, char *str, int len)
+static void log_fmt_tostring(int level, const char *filename, int lineno, const char *fmt, char *str, int len)
 {
     int i = 0;
     int prev = 0;
@@ -76,13 +100,19 @@ static void log_fmt_tostring(const char *fmt, char *str, int len)
                 break;
             }
             case 'f': {
-                int str_len = snprintf(str + i, len - i, "%s", __FILE__);
+                int str_len = snprintf(str + i, len - i, "%s", filename);
                 i += str_len;
                 prev = 0;
                 break;
             }
             case 'l': {
-                int str_len = snprintf(str + i, len - i, "%d", __LINE__);
+                int str_len = snprintf(str + i, len - i, "%d", lineno);
+                i += str_len;
+                prev = 0;
+                break;
+            }
+            case 'L': {
+                int str_len = snprintf(str + i, len - i, "%s", level_to_string(level));
                 i += str_len;
                 prev = 0;
                 break;
@@ -100,18 +130,20 @@ static void log_fmt_tostring(const char *fmt, char *str, int len)
 
 void log_set_level(int level)
 {
-    int level_on = level <= LOG_LEVEL_ALL ? LOG_LEVEL_ALL + 1 : level;
-    for (int i = LOG_LEVEL_ALL + 1; i < level_on; i++)
+    if (level <= LOG_LEVEL_ALL || level >= LOG_LEVEL_OFF)
+        return;
+    
+    for (int i = LOG_LEVEL_ALL + 1; i < level; i++)
         log_level[i] = 0;
-    for (int i = level_on; i < LOG_LEVEL_OFF; i++)
+    for (int i = level; i < LOG_LEVEL_OFF; i++)
         log_level[i] = 1;
 }
 
-void log_set_level_one(int level)
+void log_set_level_one(int level, int flag)
 {
     if (level <= LOG_LEVEL_ALL || level >= LOG_LEVEL_OFF)
         return;
-    log_level[level] = 1;
+    log_level[level] = !!flag;
 }
 
 
@@ -122,18 +154,7 @@ void log_set_logfile(int level, const char *pathname)
     log_file[level] = pathname;
 }
 
-void log_init()
-{
-    log_set_level(LOG_LEVEL_ERROR);
-    log_file[LOG_LEVEL_TRACE] = "/var/log/log_trace.log";
-    log_file[LOG_LEVEL_DEBUG] = "/var/log/log_debug.log";
-    log_file[LOG_LEVEL_INFO] = "/var/log/log_info.log";
-    log_file[LOG_LEVEL_WARNING] = "/var/log/log_warning.log";
-    log_file[LOG_LEVEL_ERROR] = "/var/log/log_error.log";
-    log_file[LOG_LEVEL_FATAL] = "/var/log/log_fatal.log";
-}
-
-void log_log(int level, const char *fmt, ...)
+void log_log(int level, const char *filename, int lineno, const char *fmt, ...)
 {
     if (level <= LOG_LEVEL_ALL || level >= LOG_LEVEL_OFF || !log_level[level])
         return;
@@ -143,7 +164,7 @@ void log_log(int level, const char *fmt, ...)
         return;
     }
     char buf[BUFSIZ];
-    log_fmt_tostring(log_fmt, buf, sizeof(buf));
+    log_fmt_tostring(level, filename, lineno, log_fmt, buf, sizeof(buf));
     fprintf(fp, "%s", buf);
 
     va_list ap;
