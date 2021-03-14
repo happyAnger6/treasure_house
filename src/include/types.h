@@ -1,6 +1,10 @@
 #ifndef _TH_TYPES_H
 #define _TH_TYPES_H
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 typedef signed char s8;
 typedef unsigned char u8;
 
@@ -18,11 +22,21 @@ typedef unsigned gfp_t;
 #define BYTES_PER_WORD      sizeof(void *)
 #define BITS_PER_BYTE 8
 
-#define __ALIGN(x, a)		__ALIGN_MASK(x, (typeof(x))(a) - 1)
-#define __ALIGN_MASK(x, mask)	(((x) + (mask)) & ~(mask))
+#define __ALIGN_MASK(x, mask)   (((x) + (mask)) & ~(mask))
+#define __ALIGN(x, a)       __ALIGN_MASK(x, (typeof(x))(a) - 1)
 #define ALIGN(x, a) __ALIGN((x), (a))
+#define ALIGN_ADDR(addr, align) \
+    (typeof(addr))(ALIGN(((intptr_t)(addr)), align))
 
 #define max(x, y)      \
     (x) > (y) ? (x) : (y)
+
+#define MIN(a, b) ((a)<(b) ? (a):(b))
+
+#define  noinline   __attribute__((noinline))
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
