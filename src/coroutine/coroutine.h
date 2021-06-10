@@ -33,9 +33,16 @@ typedef struct {
 
 
 extern int coroutine_init();
+<<<<<<< HEAD
 extern coroutine_t* coroutine_create(coroutine_func co_fn, void *args);
 extern int coroutine_yield();
 extern int coroutine_loop();
 extern void co_destory(coroutine_t *co);
+=======
+extern coroutine_t* coroutine_create(coroutine_fn co_fn, void *args)
+extern int coroutine_yield();
+extern int coroutine_loop();
+extern void void co_destory(coroutine_t *co);
+>>>>>>> 178a3096f803d270ee97dba0bc268263e3769dce
 
 #endif
