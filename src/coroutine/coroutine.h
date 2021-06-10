@@ -9,10 +9,16 @@ typedef void (*coroutine_func)(void*);
 
 typedef enum {
     CO_CREATE=0,
+<<<<<<< HEAD
     CO_READY,
     CO_RUNNINE,
     CO_SUSPEND,
     CO_END
+=======
+    CO_RUNNINE=1,
+    CO_SUSPEND=2,
+    CO_END=3
+>>>>>>> 48895903c642875dfee71baa52a3e1cb3883909e
 }CO_STATUS;
 
 typedef struct {
