@@ -5,6 +5,7 @@ aux_source_directory(memory SRCS)
 aux_source_directory(container SRCS)
 aux_source_directory(threadpool SRCS)
 aux_source_directory(queue SRCS)
+aux_source_directory(coroutine SRCS)
 
 add_library(treasure_house STATIC ${SRCS})
 
