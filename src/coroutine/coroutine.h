@@ -27,8 +27,8 @@ typedef struct {
     struct sched_t *sched;
     struct list_head list;
     ucontext_t uctx;
-	char *stack;
-	int32_t stack_size;
+    char *stack;
+    int32_t stack_size;
     void *fn_data;
     coroutine_func fn;
     CO_STATUS status;
@@ -39,8 +39,8 @@ extern coroutine_t* coroutine_create(coroutine_func co_fn, void *args);
 extern int coroutine_yield();
 extern int coroutine_loop();
 
-#endif
-
 #ifdef __cplusplus
 }
+#endif
+
 #endif
