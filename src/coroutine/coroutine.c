@@ -22,6 +22,8 @@ static coroutine_t* _co_new(coroutine_func fn, void *args)
     co->stack_size = 0;
     co->sched = NULL;
     co->status = CO_READY;
+    co->stack = NULL;
+    co->stack_size = 0;
     INIT_LIST_HEAD(&co->list);
 
     return co;
