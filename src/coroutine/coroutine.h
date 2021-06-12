@@ -5,18 +5,37 @@
 extern "C"{
 #endif
 
-#include <ucontext.h>
+#include <stdint.h>
 
 #include "list.h"
 
-#define CO_STACK_SIZE 16*1024
+#include <ucontext.h>
 
 typedef void (*coroutine_func)(void*);
 
-typedef void* coroutine_handle;
+typedef enum {
+    CO_CREATE=0,
+    CO_READY,
+    CO_RUNNINE,
+    CO_YIELD,
+    CO_END
+}CO_STATUS;
+
+struct sched_t;
+
+typedef struct {
+    struct sched_t *sched;
+    struct list_head list;
+    ucontext_t uctx;
+	char *stack;
+	int32_t stack_size;
+    void *fn_data;
+    coroutine_func fn;
+    CO_STATUS status;
+}coroutine_t;
 
 extern int coroutine_init();
-extern coroutine_handle coroutine_create(coroutine_func co_fn, void *args);
+extern coroutine_t* coroutine_create(coroutine_func co_fn, void *args);
 extern int coroutine_yield();
 extern int coroutine_loop();
 
