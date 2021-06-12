@@ -41,7 +41,7 @@ extern sched_t* sched_create();
 extern void sched_destory(sched_t *sched);
 extern void sched_run(sched_t *sched);
 extern void sched_sched(sched_t *sched, coroutine_t *co);
-extern void sched_yield(sched_t *sched);
+extern void sched_yield_coroutine(sched_t *sched);
 extern void sched_stop(sched_t *sched);
 
 

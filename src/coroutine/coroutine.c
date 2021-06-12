@@ -58,7 +58,7 @@ int coroutine_loop()
 
 int coroutine_yield()
 {
-    return sched_yield(sched_main);
+    return sched_yield_coroutine(sched_main);
 }
 
 void co_destory(coroutine_t *co)

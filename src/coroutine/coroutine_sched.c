@@ -123,7 +123,7 @@ static void save_co_stack(coroutine_t *co, char *top)
     memcpy(co->stack, &stack_base, stack_size);
 }
 
-void sched_yield(sched_t *sched)
+void sched_yield_coroutine(sched_t *sched)
 {
     coroutine_t *co = sched->co_curr;
     co_queue_append(&sched->co_ready_queue, co);
