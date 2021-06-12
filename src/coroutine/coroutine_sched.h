@@ -25,7 +25,7 @@ typedef struct {
 static inline int queue_init(queue_t *q)
 {
     INIT_LIST_HEAD(&q->queue);
-    return pthread_mutex_init(&q->lock);
+    return pthread_mutex_init(&q->lock, NULL);
 }
 
 typedef struct {
@@ -40,8 +40,8 @@ typedef struct {
 extern sched_t* sched_create();
 extern void sched_destory(sched_t *sched);
 extern void sched_run(sched_t *sched);
-extern void sched_sched(coroutine_t *co);
-extern void sched_yield(coroutine_t *co);
+extern void sched_sched(sched_t *sched, coroutine_t *co);
+extern void sched_yield(sched_t *sched);
 extern void sched_stop(sched_t *sched);
 
 

@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #include "list.h"
+#include "coroutine_types.h"
 #include "coroutine.h"
 #include "coroutine_sched.h"
 
