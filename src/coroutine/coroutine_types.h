@@ -1,5 +1,5 @@
-#ifndef _COROUTINE_SCHED_H
-#define _COROUTINE_SCHED_H
+#ifndef _COROUTINE_TYPES_H
+#define _COROUTINE_TYPES_H
 
 #ifdef __cplusplus
 extern "C"{
