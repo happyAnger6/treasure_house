@@ -21,10 +21,8 @@ typedef enum {
     CO_END
 }CO_STATUS;
 
-struct sched_t;
-
 typedef struct {
-    struct sched_t *sched;
+    void *sched;
     struct list_head list;
     ucontext_t uctx;
     char *stack;

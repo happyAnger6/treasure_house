@@ -3,6 +3,8 @@
 
 #include "coroutine_sched.h"
 
+typedef void (*context_fn)();
+
 static coroutine_t* co_queue_popleft(queue_t *queue)
 {
     coroutine_t *co = NULL;
@@ -107,7 +109,7 @@ static int make_co_context(sched_t *sched, coroutine_t *co)
     co->uctx.uc_stack.ss_sp = sched->stack;
     co->uctx.uc_stack.ss_size = sizeof(sched->stack);
     co->uctx.uc_link = &sched->uctx_main; //if end, return to sched's main_loop.
-    makecontext(&co->uctx, co_wrapper, 1, sched);
+    makecontext(&co->uctx, (context_fn)co_wrapper, 1, sched);
     return 0;
 }
 
@@ -141,7 +143,7 @@ extern void sched_sched(sched_t *sched, coroutine_t *co)
     
     co_queue_append(&sched->co_ready_queue, co);
     make_co_context(sched, co); 
-    co->sched = sched;
+    co->sched = (void *)sched;
 
     return;
 }
