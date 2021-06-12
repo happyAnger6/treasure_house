@@ -143,7 +143,7 @@ void sched_yield_coroutine(sched_t *sched)
 {
     coroutine_t *co = sched->co_curr;
     co_queue_append(&sched->co_ready_queue, co);
-    save_co_stack(co, sched->stack + sched->stack_size + CO_STACK_SIZE); 
+    save_co_stack(co, sched->stack + sched->stack_size); 
 
     co->status = CO_YIELD;
     swapcontext(&co->uctx, &sched->uctx_main);
