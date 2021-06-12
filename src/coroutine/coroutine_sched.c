@@ -55,7 +55,7 @@ static void main_loop(void *args)
 {
     sched_t* sched = (sched_t *)args;
     while(sched->status == SCHED_RUNNING){
-        if(pick_one_co(sched) == -1) {
+        if(pick_one_co(sched) == 0) {
             sched->status = SCHED_STOPPED;
             puts("all coroutines done!\r\n");
             break;
