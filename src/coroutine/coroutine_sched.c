@@ -3,8 +3,13 @@
 
 #include "coroutine_sched.h"
 
-typedef void (*context_fn)();
+typedef void (*uctx_fn)();
 
+/* Return a courinte_t* pop from queue header. If queue is empty,
+** return NULL.
+** 
+** queue: a coroutine queue.
+*/
 static coroutine_t* co_queue_popleft(queue_t *queue)
 {
     coroutine_t *co = NULL;
@@ -20,6 +25,11 @@ static coroutine_t* co_queue_popleft(queue_t *queue)
     return co;
 }
 
+/* Return 0 if append co to queue successfully.
+** 
+** queue: a coroutine queue.
+** co: a coroutine to be added.
+*/
 static int co_queue_append(queue_t *queue, coroutine_t *co)
 {
     pthread_mutex_lock(&queue->lock);
@@ -76,6 +86,8 @@ sched_t* sched_create()
 
     sched->co_curr = NULL;
     sched->status = SCHED_CREATED;
+	sched->stack_size = sizeof(sched->stack);
+	sched->co_nums = 0;
 
     return sched;
 }
@@ -99,6 +111,7 @@ static void co_wrapper(sched_t *sched)
     func(co->fn_data);
 
     co_destory(co); // co already done.
+	sched->co_nums--;
 }
 
 static int make_co_context(sched_t *sched, coroutine_t *co)
@@ -109,7 +122,7 @@ static int make_co_context(sched_t *sched, coroutine_t *co)
     co->uctx.uc_stack.ss_sp = sched->stack;
     co->uctx.uc_stack.ss_size = sizeof(sched->stack);
     co->uctx.uc_link = &sched->uctx_main; //if end, return to sched's main_loop.
-    makecontext(&co->uctx, (context_fn)co_wrapper, 1, sched);
+    makecontext(&co->uctx, (uctx_fn)co_wrapper, 1, sched);
     return 0;
 }
 
@@ -145,5 +158,6 @@ extern void sched_sched(sched_t *sched, coroutine_t *co)
     make_co_context(sched, co); 
     co->sched = (void *)sched;
 
+	sched->co_nums++;
     return;
 }

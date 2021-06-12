@@ -31,6 +31,7 @@ static inline int queue_init(queue_t *q)
 
 typedef struct {
     int status;
+	int co_nums;
     queue_t co_queue;
     queue_t co_ready_queue;
     char stack[CO_STACK_SIZE]; // shared by all coroutines in this sched_t.
@@ -45,7 +46,7 @@ extern void* sched_run(void *args);
 extern void sched_sched(sched_t *sched, coroutine_t *co);
 extern void sched_yield_coroutine(sched_t *sched);
 extern void sched_stop(sched_t *sched);
-
+extern int32_t sched_co_nums(sched_t *sched);
 
 #ifdef __cplusplus
 }
