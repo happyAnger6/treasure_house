@@ -1,3 +1,4 @@
+#include <string.h>
 #include <assert.h>
 
 #include "coroutine_sched.h"
@@ -42,7 +43,7 @@ static void run_sched(sched_t* sched)
 {
     coroutine_t *co = sched->co_curr;
     if(co->status != CO_READY)  // resched shoule restore stack first.
-        restore_co_stack(co);
+        restore_co_stack(sched, co);
     
     co->status = CO_READY;
     swapcontext(&sched->uctx_main, &sched->co_curr->uctx);
@@ -58,7 +59,7 @@ static void main_loop(void *args)
             break;
         }
 
-        run_sched();
+        run_sched(sched);
     }
 }
 

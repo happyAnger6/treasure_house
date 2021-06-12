@@ -4,6 +4,7 @@
 #ifdef __cplusplus
 extern "C"{
 #endif
+#include <stdint.h>
 
 #include <ucontext.h>
 #include <pthread.h>
@@ -33,13 +34,14 @@ typedef struct {
     queue_t co_queue;
     queue_t co_ready_queue;
     char stack[CO_STACK_SIZE]; // shared by all coroutines in this sched_t.
+    int32_t stack_size;
     ucontext_t uctx_main;
     coroutine_t *co_curr;
 } sched_t;
 
 extern sched_t* sched_create();
 extern void sched_destory(sched_t *sched);
-extern void sched_run(sched_t *sched);
+extern void sched_run(void *args);
 extern void sched_sched(sched_t *sched, coroutine_t *co);
 extern void sched_yield_coroutine(sched_t *sched);
 extern void sched_stop(sched_t *sched);
