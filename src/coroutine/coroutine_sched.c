@@ -5,6 +5,12 @@
 
 typedef void (*uctx_fn)();
 
+#define lock_obj(obj) \
+    pthread_mutex_lock(obj->lock)
+
+#define unlock_obj(obj) \
+    pthread_mutex_unlock(queue->lock)
+
 /* Return a courinte_t* pop from queue header. If queue is empty,
 ** return NULL.
 ** 
@@ -54,24 +60,34 @@ static void restore_co_stack(sched_t *sched, coroutine_t *co)
 static void run_sched(sched_t* sched)
 {
     coroutine_t *co = sched->co_curr;
-    if(co->status != CO_READY)  // resched shoule restore stack first.
+    if(co->status != CO_RUNNABLE)  // resched shoule restore stack first.
         restore_co_stack(sched, co);
     
-    co->status = CO_READY;
+    co->status = CO_RUNNABLE;
     swapcontext(&sched->uctx_main, &sched->co_curr->uctx);
 }
 
 static void main_loop(void *args)
 {
     sched_t* sched = (sched_t *)args;
-    while(sched->status == SCHED_RUNNING){
-        if(pick_one_co(sched) == 0) {
-            sched->status = SCHED_STOPPED;
-            puts("all coroutines done!\r\n");
-            break;
+    while (sched->status == SCHED_RUNNING) {
+        pthread_mutex_lock(&sched->lock);
+        while(sched->co_nums == 0) 
+        {
+            if (sched->status != SCHED_RUNNING) {
+                sched_destory(sched);
+                return;
+            }
+            pthread_cond_wait(&sched->cond, &sched->lock);
         }
-
-        run_sched(sched);
+           
+        if (pick_one_co(sched) != 0) {  // no ready coroutine means we should event loop wait for some event.
+            pthread_mutex_unlock(&sched->lock);
+            event_loop();
+        } else {
+            pthread_mutex_unlock(&sched->lock);
+            run_sched(sched);
+        }
     }
 }
 
@@ -81,13 +97,15 @@ sched_t* sched_create()
     if(sched == NULL)
         error_exit("sched malloc failed!\r\n");
 
+    pthread_mutex_init(&sched->lock, NULL);
+    pthread_cond_init(&sched->cond, NULL);
     queue_init(&sched->co_queue);
     queue_init(&sched->co_ready_queue);
 
     sched->co_curr = NULL;
     sched->status = SCHED_CREATED;
-	sched->stack_size = sizeof(sched->stack);
-	sched->co_nums = 0;
+    sched->stack_size = sizeof(sched->stack);
+    sched->co_nums = 0;
 
     return sched;
 }
@@ -111,7 +129,10 @@ static void co_wrapper(sched_t *sched)
     func(co->fn_data);
 
     co_destory(co); // co already done.
-	sched->co_nums--;
+
+    lock_obj(sched);
+    sched->co_nums--;
+    unlock_obj(sched);
 }
 
 static int make_co_context(sched_t *sched, coroutine_t *co)
@@ -145,19 +166,25 @@ void sched_yield_coroutine(sched_t *sched)
     co_queue_append(&sched->co_ready_queue, co);
     save_co_stack(co, sched->stack + sched->stack_size); 
 
-    co->status = CO_YIELD;
+    co->status = CO_WAITING;
     swapcontext(&co->uctx, &sched->uctx_main);
     return;
 }
 
 extern void sched_sched(sched_t *sched, coroutine_t *co)
 {
-    assert(co->status == CO_READY); 
-    
-    co_queue_append(&sched->co_ready_queue, co);
+    assert(co->status == CO_RUNNABLE); 
+
     make_co_context(sched, co); 
     co->sched = (void *)sched;
+    
+    // to avoid deadlock, we must keep locks sequence: sched->lock first, then queue->lock.
+    pthread_mutex_lock(&sched->lock);     
+    if(sched->co_nums == 0)
+        pthread_cond_signal(&sched->cond);
+    co_queue_append(&sched->co_ready_queue, co);
+    sched->co_nums++;
+    pthread_mutex_unlock(&sched->lock);
 
-	sched->co_nums++;
     return;
 }

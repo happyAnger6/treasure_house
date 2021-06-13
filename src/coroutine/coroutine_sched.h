@@ -32,6 +32,8 @@ static inline int queue_init(queue_t *q)
 typedef struct {
     int status;
 	int co_nums;
+	pthread_cond_t cond;
+	pthread_mutex_lock lock;
     queue_t co_queue;
     queue_t co_ready_queue;
     char stack[CO_STACK_SIZE]; // shared by all coroutines in this sched_t.
