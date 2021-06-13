@@ -1,7 +1,11 @@
+#include <stdint.h>
 #include <string.h>
 #include <assert.h>
 
+#include "co_time.h"
 #include "coroutine_sched.h"
+#include "event_loop.h"
+#include "processor.h"
 
 typedef void (*uctx_fn)();
 
@@ -67,6 +71,22 @@ static void run_sched(sched_t* sched)
     swapcontext(&sched->uctx_main, &sched->co_curr->uctx);
 }
 
+static long process_expired_timers(sched_t *sched)
+{
+    void *top;
+    while ((top=heap_top(sched->co_timer_heap)) != NULL)
+    {
+        co_timer_t timer = (co_timer_t)top;
+        time_now = co_timer_now();
+        if (timer->when > time_now) 
+            return timer->when - time_now;
+
+        timer->callback(timer->args);
+    }
+
+    return -1;
+}
+
 static void main_loop(void *args)
 {
     sched_t* sched = (sched_t *)args;
@@ -83,7 +103,9 @@ static void main_loop(void *args)
            
         if (pick_one_co(sched) != 0) {  // no ready coroutine means we should event loop wait for some event.
             pthread_mutex_unlock(&sched->lock);
-            event_loop();
+            long delay = process_expired_timers(sched);
+            event_loop_run(sched->ev_engine, delay);
+            (void)process_expired_timers(sched);
         } else {
             pthread_mutex_unlock(&sched->lock);
             run_sched(sched);
@@ -107,6 +129,8 @@ sched_t* sched_create()
     sched->stack_size = sizeof(sched->stack);
     sched->co_nums = 0;
 
+    sched->co_timer_heap = heap_create(sizeof(void*), co_timer_cmp);
+    sched->ev_engine = event_loop_create();
     return sched;
 }
 
@@ -119,6 +143,8 @@ extern void* sched_run(void *args)
 {
     sched_t *sched = (sched_t *)args;
     sched->status = SCHED_RUNNING;
+
+    processor_set_sched(sched); // set sched, so coroutine on sched can get it.
     main_loop(sched);
 }
 
@@ -160,18 +186,26 @@ static void save_co_stack(coroutine_t *co, char *top)
     memcpy(co->stack, &stack_base, stack_size);
 }
 
-void sched_yield_coroutine(sched_t *sched)
+static inline void co_schedule(sched_t *sched, coroutine_t *co, CO_STATUS status)
 {
-    coroutine_t *co = sched->co_curr;
-    co_queue_append(&sched->co_ready_queue, co);
     save_co_stack(co, sched->stack + sched->stack_size); 
-
-    co->status = CO_WAITING;
-    swapcontext(&co->uctx, &sched->uctx_main);
-    return;
+    co->status = status;
+    swaptcontext(&co->uctx, &sched->uctx_main)
 }
 
-extern void sched_sched(sched_t *sched, coroutine_t *co)
+void sched_suspend_coroutine(sched_t *sched)
+{
+    co_queue_append(&sched->co_queue, co);
+    co_schedule(sched, sched->co_curr, CO_WAITING);
+}
+
+void sched_yield_coroutine(sched_t *sched)
+{
+    co_queue_append(&sched->co_ready_queue, co);
+    co_schedule(sched, sched->co_curr, CO_WAITING);
+}
+
+void sched_sched(sched_t *sched, coroutine_t *co)
 {
     assert(co->status == CO_RUNNABLE); 
 
@@ -187,4 +221,24 @@ extern void sched_sched(sched_t *sched, coroutine_t *co)
     pthread_mutex_unlock(&sched->lock);
 
     return;
+}
+
+static void* co_after_delay(void* args)
+{
+    coroutine_t *co = (coroutine_t *)args;
+    list_del(&co->list);
+
+    co->status = CO_RUNNABLE;
+    co_queue_append(&sched->co_ready_queue, co);
+    return NULL;
+}
+
+void sched_delay(sched_t *sched, long delay_ms)
+{
+    coroutine_t *co = sched->co_curr;
+    co_timer_t ct = co_timer_after(delay_ms, co_after_delay, (void *)co);
+    heap_push(sched->co_timer_heap, (void *)ct);
+
+    co->status = CO_WAITING;
+    co_schedule(sched, sched->co_curr, CO_WAITING);
 }

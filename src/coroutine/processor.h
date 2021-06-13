@@ -16,6 +16,12 @@ typedef struct {
     int p_nums;
 } processors_t;
 
+typedef enum {
+    SUSPEND_SLEEP = 0,
+    SUSPEND_YIELD,
+    SUSPEND_INVALID
+} suspend_type_t;
+
 /* Create a processors for execute coroutines.
 **
 ** processors_t is consists of processor_t which uses an os thread 
@@ -32,4 +38,16 @@ extern void processors_join();
 ** approciate processor_t to coroutine.
 */
 extern void processors_submit(coroutine_t *co);
+
+/* Suspend current coroutine 
+** s_type: suspend type. suspend_type_t
+** args: args by suspend type.
+*/
+extern void processor_suspend(suspend_type_t s_type, void *args);
+
+extern void processor_set_sched(sched_t *sched);
+
+extern sched_t* processor_get_sched();
+
+
 #endif

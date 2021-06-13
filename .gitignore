@@ -74,3 +74,5 @@ dkms.conf*.IAB
 *.WK3
 .SearchResults
 s_myprojs.SearchResults
+"*.~vsd" 
+*.~vsd 

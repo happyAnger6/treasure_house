@@ -67,3 +67,8 @@ void co_destory(coroutine_t *co)
     assert(co != NULL);
     free(co);
 }
+
+int coroutine_sleep(int32_t sleep_ms)
+{
+
+}
