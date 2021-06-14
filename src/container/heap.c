@@ -1,5 +1,7 @@
 #include "heap.h"
 
+#define HEAP_INIT_CAP 16
+
 typedef struct {
     void **elements;
     heap_cmp_fn cmp_fn;
@@ -7,8 +9,6 @@ typedef struct {
     uint32_t elem_num;
     uint32_t cap;
 } _heap_t;
-
-#define HEAP_INIT_CAP 16
 
 heap_t heap_create(uint32_t elem_size, heap_cmp_fn cmp_fn)
 {
