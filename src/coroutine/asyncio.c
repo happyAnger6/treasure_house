@@ -3,7 +3,8 @@
 
 #include "asyncio.h"
 
-void asyncio_sleep(int32_t expired_ms)
+void asyncio_sleep(long expired_ms)
 {
     sched_t *sched = processor_get_sched();
+    sched_delay(sched, delay_ms);
 }
