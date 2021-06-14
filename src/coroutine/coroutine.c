@@ -7,9 +7,7 @@
 #include "list.h"
 #include "coroutine_types.h"
 #include "coroutine.h"
-#include "coroutine_sched.h"
-
-static sched_t *sched_main;
+#include "processor.h"
 
 static coroutine_t* _co_new(coroutine_func fn, void *args)
 {
@@ -33,32 +31,26 @@ static coroutine_t* _co_new(coroutine_func fn, void *args)
 coroutine_t* coroutine_create(coroutine_func co_fn, void *args)
 {
     coroutine_t *co =  _co_new(co_fn, args);
-    sched_sched(sched_main, co);
+    processors_submit( co);
     return co;
 }
 
 int coroutine_init()
 {
-    if(sched_main != NULL)
-        error_exit("coroutine already inited!!!\r\n");
-
-    sched_main = sched_create();
+    processors_create();
     return 0;
 }
 
 int coroutine_loop()
 {
-    if(sched_main == NULL) 
-        error_exit("coroutine have not init yet!!!\r\n");
-
-    sched_run((void *)sched_main);
+    processors_join();
     puts("coroutine loop exit.");
     return 0;
 }
 
 int coroutine_yield()
 {
-    sched_yield_coroutine(sched_main);
+    processors_suspend(SUSPEND_YIELD, NULL);
     return 0;
 }
 
@@ -66,9 +58,4 @@ void co_destory(coroutine_t *co)
 {
     assert(co != NULL);
     free(co);
-}
-
-int coroutine_sleep(int32_t sleep_ms)
-{
-
 }

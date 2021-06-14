@@ -14,6 +14,7 @@ typedef struct {
 typedef struct {
     processor_t *all_p;
     int p_nums;
+    int p_turn;
 } processors_t;
 
 typedef enum {
@@ -43,11 +44,11 @@ extern void processors_submit(coroutine_t *co);
 ** s_type: suspend type. suspend_type_t
 ** args: args by suspend type.
 */
-extern void processor_suspend(suspend_type_t s_type, void *args);
+extern void processors_suspend(suspend_type_t s_type, void *args);
 
-extern void processor_set_sched(sched_t *sched);
+extern void processors_set_sched(sched_t *sched);
 
-extern sched_t* processor_get_sched();
+extern sched_t* processors_get_sched();
 
 
 #endif

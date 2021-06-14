@@ -77,11 +77,12 @@ static long process_expired_timers(sched_t *sched)
     while ((top=heap_top(sched->co_timer_heap)) != NULL)
     {
         co_timer_t timer = (co_timer_t)top;
-        time_now = co_timer_now();
+        long time_now = co_timer_now();
         if (timer->when > time_now) 
             return timer->when - time_now;
 
-        timer->callback(timer->args);
+        co_timer_run(timer);
+        co_timer_destory(timer);
     }
 
     return -1;
@@ -145,7 +146,7 @@ extern void* sched_run(void *args)
     sched_t *sched = (sched_t *)args;
     sched->status = SCHED_RUNNING;
 
-    processor_set_sched(sched); // set sched, so coroutine on sched can get it.
+    processors_set_sched(sched); // set sched, so coroutine on sched can get it.
     main_loop(sched);
 }
 
@@ -240,6 +241,10 @@ void sched_delay(sched_t *sched, long delay_ms)
     co_timer_t ct = co_timer_after(delay_ms, co_after_delay, (void *)co);
     heap_push(sched->co_timer_heap, (void *)ct);
 
-    co->status = CO_WAITING;
-    co_schedule(sched, sched->co_curr, CO_WAITING);
+    sched_suspend_coroutine(co);
+}
+
+int32_t sched_co_nums(sched_t *sched)
+{
+    return sched->co_nums;
 }
