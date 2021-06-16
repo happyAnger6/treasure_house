@@ -20,7 +20,7 @@ typedef void (*uctx_fn)();
 ** 
 ** queue: a coroutine queue.
 */
-static coroutine_t* co_queue_popleft(queue_t *queue)
+static inline coroutine_t* co_queue_popleft(queue_t *queue)
 {
     coroutine_t *co = NULL;
     pthread_mutex_lock(&queue->lock);
@@ -40,7 +40,7 @@ static coroutine_t* co_queue_popleft(queue_t *queue)
 ** queue: a coroutine queue.
 ** co: a coroutine to be added.
 */
-static int co_queue_append(queue_t *queue, coroutine_t *co)
+static inline int co_queue_append(queue_t *queue, coroutine_t *co)
 {
     pthread_mutex_lock(&queue->lock);
     list_add_tail(&co->list, &queue->queue);
@@ -49,19 +49,19 @@ static int co_queue_append(queue_t *queue, coroutine_t *co)
     return 0;
 }
 
-static int pick_one_co(sched_t* sched)
+static inline int pick_one_co(sched_t* sched)
 {
     coroutine_t *co = co_queue_popleft(&sched->co_ready_queue);
     sched->co_curr = co;
     return co != NULL;
 }
 
-static void restore_co_stack(sched_t *sched, coroutine_t *co)
+static inline void restore_co_stack(sched_t *sched, coroutine_t *co)
 {
     memcpy(sched->stack + CO_STACK_SIZE - co->stack_size, co->stack, co->stack_size);
 }
 
-static void run_sched(sched_t* sched)
+static void run_schedule(sched_t* sched)
 {
     coroutine_t *co = sched->co_curr;
     if(co->status != CO_RUNNABLE)  // resched shoule restore stack first.
@@ -96,6 +96,7 @@ static void main_loop(void *args)
         while(sched->co_nums == 0) 
         {
             if (sched->status != SCHED_RUNNING) {
+                pthread_mutex_unlock(&sched->lock);
                 sched_destory(sched);
                 return;
             }
@@ -109,7 +110,7 @@ static void main_loop(void *args)
             (void)process_expired_timers(sched);
         } else {
             pthread_mutex_unlock(&sched->lock);
-            run_sched(sched);
+            run_schedule(sched);
         }
     }
 }
@@ -188,7 +189,8 @@ static void save_co_stack(coroutine_t *co, char *top)
     memcpy(co->stack, &stack_base, stack_size);
 }
 
-static inline void co_schedule(sched_t *sched, coroutine_t *co, CO_STATUS status)
+static inline void schedule_coroutine(sched_t *sched, coroutine_t *co,
+                                CO_STATUS status)
 {
     save_co_stack(co, sched->stack + sched->stack_size); 
     co->status = status;
@@ -198,13 +200,13 @@ static inline void co_schedule(sched_t *sched, coroutine_t *co, CO_STATUS status
 void sched_suspend_coroutine(sched_t *sched)
 {
     co_queue_append(&sched->co_queue, co);
-    co_schedule(sched, sched->co_curr, CO_WAITING);
+    schedule_coroutine(sched, sched->co_curr, CO_WAITING);
 }
 
 void sched_yield_coroutine(sched_t *sched)
 {
     co_queue_append(&sched->co_ready_queue, co);
-    co_schedule(sched, sched->co_curr, CO_WAITING);
+    schedule_coroutine(sched, sched->co_curr, CO_WAITING);
 }
 
 void sched_sched(sched_t *sched, coroutine_t *co)
@@ -244,7 +246,7 @@ void sched_delay(sched_t *sched, long delay_ms)
     sched_suspend_coroutine(co);
 }
 
-int32_t sched_co_nums(sched_t *sched)
+int32_t sched_coroutine_num(sched_t *sched)
 {
     return sched->co_nums;
 }
