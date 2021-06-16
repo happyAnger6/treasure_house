@@ -96,6 +96,7 @@ static void main_loop(void *args)
         while(sched->co_nums == 0) 
         {
             if (sched->status != SCHED_RUNNING) {
+                pthread_mutex_unlock(&sched->lock);
                 sched_destory(sched);
                 return;
             }
