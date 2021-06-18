@@ -10,7 +10,7 @@ typedef struct {
     uint32_t cap;
 } _heap_t;
 
-heap_t heap_create(uint32_t elem_size, heap_cmp_fn cmp_fn)
+heap_t heap_create(heap_cmp_fn cmp_fn)
 {
     _heap_t *ht = malloc(sizeof(_heap_t));
 
@@ -18,6 +18,7 @@ heap_t heap_create(uint32_t elem_size, heap_cmp_fn cmp_fn)
     ht->cap = HEAP_INIT_CAP;
     ht->elements = (void **)malloc(sizeof(void *) * HEAP_INIT_CAP);
     ht->elem_num = 0;
+    ht->cmp_fn = cmp_fn;
 
     return (heap_t)ht;
 }

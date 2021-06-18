@@ -54,7 +54,7 @@ int coroutine_yield()
     return 0;
 }
 
-void co_destory(coroutine_t *co)
+void coroutine_destory(coroutine_t *co)
 {
     assert(co != NULL);
     free(co);

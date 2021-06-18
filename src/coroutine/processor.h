@@ -6,6 +6,8 @@
 #include "coroutine.h"
 #include "coroutine_sched.h"
 
+#include "sync.h"
+
 typedef struct {
     pthread_t os_thread;
     sched_t *sched;
@@ -13,6 +15,7 @@ typedef struct {
 
 typedef struct {
     processor_t *all_p;
+    wait_group_t wg; // control all croutines
     int p_nums;
     int p_turn;
 } processors_t;
@@ -50,5 +53,6 @@ extern void processors_set_sched(sched_t *sched);
 
 extern sched_t* processors_get_sched();
 
+extern void processors_coroutine_done();
 
 #endif

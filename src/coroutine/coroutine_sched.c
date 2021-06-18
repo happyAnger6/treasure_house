@@ -13,25 +13,23 @@ typedef void (*uctx_fn)();
     pthread_mutex_lock(obj->lock)
 
 #define unlock_obj(obj) \
-    pthread_mutex_unlock(queue->lock)
+    pthread_mutex_unlock(obj->lock)
 
 /* Return a courinte_t* pop from queue header. If queue is empty,
 ** return NULL.
-** 
+** Caution: should hold sched lock first.
+**
 ** queue: a coroutine queue.
 */
 static inline coroutine_t* co_queue_popleft(queue_t *queue)
 {
     coroutine_t *co = NULL;
-    pthread_mutex_lock(&queue->lock);
     if(list_empty(&queue->queue)) {
-        pthread_mutex_unlock(&queue->lock);
         return NULL;
     }
 
     co = list_entry(queue->queue.next, coroutine_t, list);
     list_del(&co->list);
-    pthread_mutex_unlock(&queue->lock);
     return co;
 }
 
@@ -42,16 +40,15 @@ static inline coroutine_t* co_queue_popleft(queue_t *queue)
 */
 static inline int co_queue_append(queue_t *queue, coroutine_t *co)
 {
-    pthread_mutex_lock(&queue->lock);
     list_add_tail(&co->list, &queue->queue);
-    pthread_mutex_unlock(&queue->lock);
-    
     return 0;
 }
 
 static inline int pick_one_co(sched_t* sched)
 {
+    lock_obj(sched);
     coroutine_t *co = co_queue_popleft(&sched->co_ready_queue);
+    unlock_obj(sched);
     sched->co_curr = co;
     return co != NULL;
 }
@@ -88,30 +85,31 @@ static long process_expired_timers(sched_t *sched)
     return -1;
 }
 
-static void main_loop(void *args)
+static void main_loop(sched_t *sched)
 {
-    sched_t* sched = (sched_t *)args;
     while (sched->status == SCHED_RUNNING) {
-        pthread_mutex_lock(&sched->lock);
+        lock_obj(sched);
         while(sched->co_nums == 0) 
         {
             if (sched->status != SCHED_RUNNING) {
-                pthread_mutex_unlock(&sched->lock);
+                unlock_obj(sched);
                 sched_destory(sched);
                 return;
             }
-            pthread_cond_wait(&sched->cond, &sched->lock);
+            pthread_cond_wait(&sched->cond, &sched->lock); // wait for new coroutines.
         }
-           
-        if (pick_one_co(sched) != 0) {  // no ready coroutine means we should event loop wait for some event.
-            pthread_mutex_unlock(&sched->lock);
+
+        unlock_obj(sched);
+        if (pick_one_co(sched) != 0) // no ready coroutine means we should event loop wait for some event.
+        {   
             long delay = process_expired_timers(sched);
-            event_loop_run(sched->ev_engine, delay);
+          
+             event_loop_run(sched->ev_engine, delay);
+           
             (void)process_expired_timers(sched);
-        } else {
-            pthread_mutex_unlock(&sched->lock);
+        } 
+        else 
             run_schedule(sched);
-        }
     }
 }
 
@@ -131,7 +129,7 @@ sched_t* sched_create()
     sched->stack_size = sizeof(sched->stack);
     sched->co_nums = 0;
 
-    sched->co_timer_heap = heap_create(sizeof(void*), co_timer_cmp);
+    sched->co_timer_heap = heap_create(co_timer_cmp);
     sched->ev_engine = event_loop_create();
     return sched;
 }
@@ -162,6 +160,8 @@ static void co_wrapper(sched_t *sched)
     lock_obj(sched);
     sched->co_nums--;
     unlock_obj(sched);
+
+    processors_coroutine_done();
 }
 
 static int make_co_context(sched_t *sched, coroutine_t *co)
@@ -249,4 +249,11 @@ void sched_delay(sched_t *sched, long delay_ms)
 int32_t sched_coroutine_num(sched_t *sched)
 {
     return sched->co_nums;
+}
+
+void sched_wakeup(sched_t *sched)
+{
+    lock_obj(sched);
+    pthread_cond_signal(&sched->cond);
+    unlock_obj(sched);
 }
