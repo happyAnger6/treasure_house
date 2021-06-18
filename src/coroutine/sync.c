@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include "sync.h"
 
 #include <pthread.h>
