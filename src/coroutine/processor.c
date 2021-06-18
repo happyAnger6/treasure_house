@@ -20,7 +20,7 @@ static void _add_wg(int val)
     wait_group_add(g_ps->wg, val);
 }
 
-static void _del_wg(int val)
+static void _del_wg()
 {
     wait_group_done(g_ps->wg);
 }
@@ -71,11 +71,11 @@ processors_t* processors_create()
 
 static void suspend_sleep(void *args)
 {
-    sched_t *sched = processor_get_sched();
+    sched_t *sched = processors_get_sched();
     assert(sched != NULL);
 
     int32_t delay = (int32_t)args;
-    sched_delay(delay);
+    sched_delay(sched, delay);
 }
 
 void processors_suspend(suspend_type_t s_type, void *args)
@@ -98,7 +98,7 @@ static void exit_all_processors()
     processor_t *proc;
     for (int i = 0; i < g_ps->p_nums; i++)
     {
-        proc = g_ps->all_p[i];
+        proc = &g_ps->all_p[i];
         sched_wakeup(proc->sched);
         pthread_join(proc->os_thread, NULL);
     }
@@ -114,14 +114,14 @@ void processors_join()
 void processors_submit(coroutine_t *co)
 {
     processor_t *proc = NULL;
-    proc = g_ps[g_ps->turn];
+    proc = g_ps[g_ps->p_turn];
     g_ps->p_turn = (g_ps->p_turn + 1) % g_ps->p_nums;
 
-    _add_wg(g_ps->wg, 1);
+    _add_wg(1);
     sched_sched(proc->sched, co);
 }
 
  void processors_coroutine_done()
  {
-     _del_wg(g_ps->wg);
+     _del_wg();
  }
