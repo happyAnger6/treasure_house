@@ -21,28 +21,28 @@ wait_group_t wait_group_create()
 
 void wait_group_add(wait_group_t wg, int val)
 {
-    _wait_group_t *wg = (_wait_group_t *)wg;
-    pthread_mutex_lock(&wg->lock);
-    wg->val += val;
-    pthread_mutex_unlock(&wg->lock);
+    _wait_group_t *_wg = (_wait_group_t *)wg;
+    pthread_mutex_lock(&_wg->lock);
+    _wg->val += val;
+    pthread_mutex_unlock(&_wg->lock);
 }
 
 void wait_group_done(wait_group_t wg)
 {
-    _wait_group_t *wg = (_wait_group_t *)wg;
-    pthread_mutex_lock(&wg->lock);
-    wg->val--;
-    if (wg->val == 0)
-        pthread_cond_signal(&wg->cond);
-    pthread_mutex_unlock(&wg->lock);
+    _wait_group_t *_wg = (_wait_group_t *)wg;
+    pthread_mutex_lock(&_wg->lock);
+    _wg->val--;
+    if (_wg->val == 0)
+        pthread_cond_signal(&_wg->cond);
+    pthread_mutex_unlock(&_wg->lock);
 }
 
 void wait_group_wait(wait_group_t wg)
 {
-    _wait_group_t *wg = (_wait_group_t *)wg;
-    pthread_mutex_lock(&wg->lock);
-    while (wg->val != 0)
-        pthread_cond_wait(&wg->cond, &wg->lock);
-    pthread_mutex_unlock(&wg->lock);
+    _wait_group_t *_wg = (_wait_group_t *)wg;
+    pthread_mutex_lock(&_wg->lock);
+    while (_wg->val != 0)
+        pthread_cond_wait(&_wg->cond, &_wg->lock);
+    pthread_mutex_unlock(&_wg->lock);
     return 0;
 }
