@@ -7,7 +7,7 @@ extern "C"{
 
 #include <stdint.h>
 
-extern void asyncio_sleep(int32_t expired_ms);
+extern void asyncio_sleep(long delay_ms);
 
 #ifdef __cplusplus
 }
