@@ -1,4 +1,5 @@
-#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 
 #include "co_time.h"
@@ -37,8 +38,8 @@ void* co_timer_run(co_timer_t co_timer)
 
 int co_timer_cmp(void* timer1, void *timer2)
 {
-    co_timer_t *ct1 = (co_timer_t *)timer1;
-    co_timer_t *ct2 = (co_timer_t *)timer2;
+    co_timer_t ct1 = (co_timer_t)timer1;
+    co_timer_t ct2 = (co_timer_t)timer2;
 
     long when1 = ct1->when;
     long when2 = ct2->when;
