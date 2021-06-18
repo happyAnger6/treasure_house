@@ -114,7 +114,7 @@ void processors_join()
 void processors_submit(coroutine_t *co)
 {
     processor_t *proc = NULL;
-    proc = &g_ps[g_ps->p_turn];
+    proc = &g_ps->all_p[g_ps->p_turn];
     g_ps->p_turn = (g_ps->p_turn + 1) % g_ps->p_nums;
 
     _add_wg(1);

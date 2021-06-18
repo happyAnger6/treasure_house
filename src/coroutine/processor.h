@@ -1,6 +1,10 @@
 #ifndef _PROCESSOR_H
 #define _PROCESSOR_H
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 #include <pthread.h>
 
 #include "coroutine.h"
@@ -54,5 +58,9 @@ extern void processors_set_sched(sched_t *sched);
 extern sched_t* processors_get_sched();
 
 extern void processors_coroutine_done();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
