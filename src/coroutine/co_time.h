@@ -5,6 +5,8 @@
 extern "C"{
 #endif
 
+typedef void* (*co_timer_callback)(void *args);
+
 static inline long ms_to_ns(long ms)
 {
     return ms * 1000 * 1000;
@@ -25,8 +27,6 @@ typedef struct {
     co_timer_callback callback;
     void *args;
 } _co_timer_t;
-
-typedef void* (*co_timer_callback)(void *args);
 
 typedef _co_timer_t* co_timer_t;
 

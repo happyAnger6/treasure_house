@@ -2,6 +2,8 @@
 #include <string.h>
 #include <assert.h>
 
+#include <pthread.h>
+
 #include "co_time.h"
 #include "coroutine_sched.h"
 #include "event_loop.h"
@@ -10,10 +12,10 @@
 typedef void (*uctx_fn)();
 
 #define lock_obj(obj) \
-    pthread_mutex_lock(obj->lock)
+    pthread_mutex_lock(&obj->lock)
 
 #define unlock_obj(obj) \
-    pthread_mutex_unlock(obj->lock)
+    pthread_mutex_unlock(&obj->lock)
 
 /* Return a courinte_t* pop from queue header. If queue is empty,
 ** return NULL.
@@ -155,7 +157,7 @@ static void co_wrapper(sched_t *sched)
     coroutine_func func = co->fn;
     func(co->fn_data);
 
-    co_destory(co); // co already done.
+    coroutine_destory(co); // co already done.
 
     lock_obj(sched);
     sched->co_nums--;
@@ -194,18 +196,24 @@ static inline void schedule_coroutine(sched_t *sched, coroutine_t *co,
 {
     save_co_stack(co, sched->stack + sched->stack_size); 
     co->status = status;
-    swaptcontext(&co->uctx, &sched->uctx_main)
+    swapcontext(&co->uctx, &sched->uctx_main);
 }
 
 void sched_suspend_coroutine(sched_t *sched)
 {
-    co_queue_append(&sched->co_queue, co);
+    lock_obj(sched);
+    co_queue_append(&sched->co_queue, sched->co_curr);
+    unlock_obj(sched);
+
     schedule_coroutine(sched, sched->co_curr, CO_WAITING);
 }
 
 void sched_yield_coroutine(sched_t *sched)
 {
-    co_queue_append(&sched->co_ready_queue, co);
+    lock_obj(sched);
+    co_queue_append(&sched->co_ready_queue, sched->co_curr);
+    unlock_obj(sched);
+    
     schedule_coroutine(sched, sched->co_curr, CO_WAITING);
 }
 
@@ -230,8 +238,9 @@ void sched_sched(sched_t *sched, coroutine_t *co)
 static void* co_after_delay(void* args)
 {
     coroutine_t *co = (coroutine_t *)args;
+    sched_t *sched = (sched_t *)co->sched;
+    
     list_del(&co->list);
-
     co->status = CO_RUNNABLE;
     co_queue_append(&sched->co_ready_queue, co);
     return NULL;
@@ -243,7 +252,7 @@ void sched_delay(sched_t *sched, long delay_ms)
     co_timer_t ct = co_timer_after(delay_ms, co_after_delay, (void *)co);
     heap_push(sched->co_timer_heap, (void *)ct);
 
-    sched_suspend_coroutine(co);
+    sched_suspend_coroutine(sched);
 }
 
 int32_t sched_coroutine_num(sched_t *sched)
