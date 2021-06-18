@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "heap.h"
 
 #define HEAP_INIT_CAP 16
