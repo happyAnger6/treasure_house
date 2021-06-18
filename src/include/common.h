@@ -5,7 +5,6 @@
 extern "C"{
 #endif
 
-
 #define __TH_ALIGN(x, a) __TH_ALIGN_MASK(x, (typeof(x))(a) - 1)
 #define __TH_ALIGN_MASK (x, mask) (((x) + (mask)) & ~(mask))
 
