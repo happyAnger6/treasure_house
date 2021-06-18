@@ -1,5 +1,6 @@
 #include <assert.h>
 
+#include "sync.h"
 #include "processor.h"
 #include "system_info.h"
 #include "coroutine_types.h"
@@ -14,6 +15,16 @@ static void make_proc_key()
     (void)pthread_key_create(&proc_key, NULL);
 }
 
+static void _add_wg(int val)
+{
+    wait_group_add(g_ps->wg, val);
+}
+
+static void _del_wg(int val)
+{
+    wait_group_done(g_ps->wg);
+}
+
 void processors_set_sched(sched_t *sched)
 {
     if(pthread_getspecific(proc_key) == NULL)
@@ -22,10 +33,11 @@ void processors_set_sched(sched_t *sched)
 
 sched_t* processors_get_sched()
 {
-    if(pthread_getspecific(proc_key) == NULL)
+    void* sched = pthread_getspecific(proc_key);
+    if (sched == NULL)
         return NULL;
    
-    return (sched_t *)pthread_getspecific(proc_key);
+    return (sched_t *)sched;
 }
 
 processors_t* processors_create()
@@ -37,6 +49,7 @@ processors_t* processors_create()
     g_ps->p_nums = cpu_num;
     g_ps->p_turn = 0;
     g_ps->all_p = malloc(cpu_num * sizeof(processor_t));
+    g_ps->wg = wait_group_create();
 
     (void)pthread_once(&key_once, make_proc_key);
 
@@ -80,11 +93,22 @@ void processors_suspend(suspend_type_t s_type, void *args)
     }
 }
 
+static void exit_all_processors()
+{
+    processor_t *proc;
+    for (int i = 0; i < g_ps->p_nums; i++)
+    {
+        proc = g_ps->all_p[i];
+        sched_wakeup(proc->sched);
+        pthread_join(proc->os_thread, NULL);
+    }
+}
 
 /* Wait for all processor_t in processors_t ended.*/
 void processors_join()
 {
-
+    wait_group_wait(g_ps->wg);
+    exit_all_processors();
 }
 
 void processors_submit(coroutine_t *co)
@@ -93,5 +117,11 @@ void processors_submit(coroutine_t *co)
     proc = g_ps[g_ps->turn];
     g_ps->p_turn = (g_ps->p_turn + 1) % g_ps->p_nums;
 
+    _add_wg(g_ps->wg, 1);
     sched_sched(proc->sched, co);
 }
+
+ void processors_coroutine_done()
+ {
+     _del_wg(g_ps->wg);
+ }

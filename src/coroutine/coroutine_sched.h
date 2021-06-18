@@ -33,7 +33,7 @@ static inline int queue_init(queue_t *q)
 
 typedef struct {
 	pthread_cond_t cond;
-	pthread_mutex_lock lock;
+	pthread_mutex_t lock;
     queue_t co_queue;
     queue_t co_ready_queue;
     heap_t co_timer_heap;
@@ -52,6 +52,8 @@ extern void* sched_run(void *args);
 extern void sched_sched(sched_t *sched, coroutine_t *co);
 extern void sched_yield_coroutine(sched_t *sched);
 extern void sched_stop(sched_t *sched);
+extern void sched_wakeup(sched_t *sched);
+
 extern int32_t sched_coroutine_nums(sched_t *sched);
 
 /* Delay current running coroutine delay_ms ms.*/
