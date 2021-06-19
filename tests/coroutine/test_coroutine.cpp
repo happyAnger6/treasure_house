@@ -65,5 +65,5 @@ TEST(coroutine_run, co_sleep)
     coroutine_loop();
 
     EXPECT_EQ(co_seq[0], 200);
-    EXPECT_EQ(co_seq[0], 100);
+    EXPECT_EQ(co_seq[1], 100);
 }
