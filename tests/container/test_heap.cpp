@@ -11,10 +11,7 @@ int cmp_int(void *pa, void *pb)
     int a = voidp_to_int(pa);
     int b = voidp_to_int(pb);
 
-    if (a == b)
-        return 0;
-
-    return a > b;
+    return a - b;
 }
 
 TEST(TEST_HEAP, test_heap_pop)
