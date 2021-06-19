@@ -69,7 +69,7 @@ static void sift_up(_heap_t * ht, int last)
     int child_pos, right_pos;
     void *tmp;
     child_pos = parent_pos << 1 + 1; 
-    while (child_pos <= last)
+    while (child_pos < last)
     {
         right_pos = child_pos + 1;
         if (right_pos < last && ht->cmp_fn(elements[child_pos], elements[right_pos]) < 0)
@@ -95,7 +95,7 @@ void* heap_pop(heap_t heap)
     
     top = ht->elements[0];
     ht->elem_num -= 1;
-    sift_up(ht, ht->elem_num - 1);
+    sift_up(ht, ht->elem_num);
     return top;
 }
 
