@@ -53,7 +53,7 @@ static void co_nosleep(void *args)
 {
     printf("co no sleep begin.\r\n");
     co_seq[seq++] = 200;
-    printf("co sleep end.\r\n");
+    printf("co no sleep end.\r\n");
 }
 
 TEST(coroutine_run, co_sleep) 
