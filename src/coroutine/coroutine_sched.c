@@ -95,7 +95,6 @@ static void main_loop(sched_t *sched)
         {
             if (sched->status != SCHED_RUNNING) {
                 unlock_obj(sched);
-                sched_destory(sched);
                 return;
             }
             pthread_cond_wait(&sched->cond, &sched->lock); // wait for new coroutines.

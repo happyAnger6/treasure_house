@@ -84,8 +84,7 @@ static void suspend_sleep(void *args)
     sched_t *sched = processors_get_sched();
     assert(sched != NULL);
 
-    int32_t delay = (int32_t)args;
-    sched_delay(sched, delay);
+    sched_delay(sched, (long)args);
 }
 
 void processors_suspend(suspend_type_t s_type, void *args)
