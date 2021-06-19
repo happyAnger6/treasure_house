@@ -105,7 +105,7 @@ void* heap_top(heap_t heap)
     if (ht->elem_num == 0)
         return NULL;
 
-    return ht->elements;
+    return ht->elements[0];
 }
 
 void heap_destory(heap_t heap)
