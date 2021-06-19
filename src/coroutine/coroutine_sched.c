@@ -52,7 +52,7 @@ static inline int pick_one_co(sched_t* sched)
     coroutine_t *co = co_queue_popleft(&sched->co_ready_queue);
     unlock_obj(sched);
     sched->co_curr = co;
-    return co != NULL;
+    return co == NULL;
 }
 
 static inline void restore_co_stack(sched_t *sched, coroutine_t *co)
