@@ -48,9 +48,10 @@ processors_t* processors_create()
         return g_ps;
 
     int cpu_num = get_cpu_nums();
+    g_ps = (processors_t *)malloc(sizeof(processors_t));
     g_ps->p_nums = cpu_num;
     g_ps->p_turn = 0;
-    g_ps->all_p = malloc(cpu_num * sizeof(processor_t));
+    g_ps->all_p = (processor_t *)malloc(cpu_num * sizeof(processor_t));
     g_ps->wg = wait_group_create();
 
     (void)pthread_once(&key_once, make_proc_key);
