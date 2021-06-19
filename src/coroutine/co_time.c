@@ -29,7 +29,7 @@ void co_timer_destory(co_timer_t co_timer)
 
 void* co_timer_run(co_timer_t co_timer)
 {
-    _co_timer_t *_co_timer;
+    _co_timer_t *_co_timer = (_co_timer_t *)co_timer;
     if(_co_timer == NULL || _co_timer->callback == NULL)
         return NULL;
 
