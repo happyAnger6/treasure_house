@@ -84,7 +84,7 @@ static long process_expired_timers(sched_t *sched)
         co_timer_destory(timer);
     }
 
-    return -1;
+    return 0; // if no timers return 0, event_loop will return immediately.
 }
 
 static void main_loop(sched_t *sched)
