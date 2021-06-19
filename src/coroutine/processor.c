@@ -42,6 +42,13 @@ sched_t* processors_get_sched()
     return (sched_t *)sched;
 }
 
+static void processors_destory()
+{
+    free(g_ps->all_p);
+    free(g_ps);
+    g_ps = NULL;
+}
+
 processors_t* processors_create()
 {
     if(g_ps != NULL)

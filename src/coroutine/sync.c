@@ -44,5 +44,7 @@ void wait_group_wait(wait_group_t wg)
     while (_wg->val != 0)
         pthread_cond_wait(&_wg->cond, &_wg->lock);
     pthread_mutex_unlock(&_wg->lock);
+
+    free(_wg);
     return 0;
 }

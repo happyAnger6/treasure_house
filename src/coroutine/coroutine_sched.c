@@ -136,19 +136,21 @@ sched_t* sched_create()
     return sched;
 }
 
-extern void sched_destory(sched_t *sched)
+static void sched_exit(sched_t *sched)
 {
     heap_destory(sched->co_timer_heap);
+    event_loop_destory(sched->ev_engine);
     free(sched);
 }
 
-extern void* sched_run(void *args)
+void* sched_run(void *args)
 {
     sched_t *sched = (sched_t *)args;
     sched->status = SCHED_RUNNING;
 
     processors_set_sched(sched); // set sched, so coroutine on sched can get it.
     main_loop(sched);
+    sched_exit(sched);
 }
 
 static void co_wrapper(sched_t *sched)
