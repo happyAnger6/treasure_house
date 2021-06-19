@@ -263,6 +263,7 @@ int32_t sched_coroutine_num(sched_t *sched)
 void sched_wakeup(sched_t *sched)
 {
     lock_obj(sched);
+    sched->status = SCHED_STOPPED;
     pthread_cond_signal(&sched->cond);
     unlock_obj(sched);
 }
