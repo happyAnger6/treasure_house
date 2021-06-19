@@ -111,7 +111,7 @@ void* heap_top(heap_t heap)
 void heap_destory(heap_t heap)
 {
     _heap_t *ht = (_heap_t *)heap;
-    for(int i = 0; i < ht->elem_size; i++)
+    for(int i = 0; i < ht->elem_num; i++)
         free(ht->elements[i]);
     
     free(ht->elements);
