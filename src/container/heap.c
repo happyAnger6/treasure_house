@@ -72,7 +72,7 @@ static void sift_up(_heap_t * ht, int last)
     while (child_pos < last)
     {
         right_pos = child_pos + 1;
-        if (right_pos < last && ht->cmp_fn(elements[child_pos], elements[right_pos]) < 0)
+        if (right_pos < last && ht->cmp_fn(elements[right_pos], elements[child_pos]) < 0)
             child_pos = right_pos;
 
         if(ht->cmp_fn(elements[child_pos], elements[parent_pos]) >= 0)
