@@ -31,5 +31,5 @@ TEST(TEST_HEAP, test_heap_pop)
     EXPECT_EQ(voidp_to_int(heap_pop(ht)), 6);
     EXPECT_EQ(voidp_to_int(heap_pop(ht)), 10);
     EXPECT_EQ(voidp_to_int(heap_pop(ht)), 20);
-    EXPECT_EQ(heap_pop(ht), NULL);
+    EXPECT_EQ(heap_pop(ht), nullptr);
 }
