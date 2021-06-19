@@ -43,10 +43,8 @@ int co_timer_cmp(void* timer1, void *timer2)
 
     long when1 = ct1->when;
     long when2 = ct2->when;
-    if(when1 == when2)
-        return 0;
 
-    return when1 > when2;
+    return when1 - when2;
 }
 
 long co_timer_now()

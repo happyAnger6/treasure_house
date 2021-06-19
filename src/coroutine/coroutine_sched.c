@@ -73,13 +73,14 @@ static void run_schedule(sched_t* sched)
 static long process_expired_timers(sched_t *sched)
 {
     void *top;
-    while ((top=heap_pop(sched->co_timer_heap)) != NULL)
+    while ((top=heap_top(sched->co_timer_heap)) != NULL)
     {
         co_timer_t timer = (co_timer_t)top;
         long time_now = co_timer_now();
         if (timer->when > time_now) 
             return timer->when - time_now;
 
+        heap_pop(sched->co_timer_heap);
         co_timer_run(timer);
         co_timer_destory(timer);
     }
