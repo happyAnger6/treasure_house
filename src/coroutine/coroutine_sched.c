@@ -219,6 +219,11 @@ void sched_yield_coroutine(sched_t *sched)
     schedule_coroutine(sched, sched->co_curr, CO_WAITING);
 }
 
+void sched_await_coroutine(sched_t *sched)
+{
+    schedule_suspend_coroutine(sched);
+}
+
 void sched_sched(sched_t *sched, coroutine_t *co)
 {
     assert(co->status == CO_RUNNABLE); 
@@ -237,7 +242,7 @@ void sched_sched(sched_t *sched, coroutine_t *co)
     return;
 }
 
-static void* co_after_delay(void* args)
+void* sched_co_resume(void *args)
 {
     coroutine_t *co = (coroutine_t *)args;
     sched_t *sched = (sched_t *)co->sched;
@@ -245,6 +250,15 @@ static void* co_after_delay(void* args)
     list_del(&co->list);
     co->status = CO_RUNNABLE;
     co_queue_append(&sched->co_ready_queue, co);
+
+    return NULL;
+}
+
+static void* co_after_delay(void* args)
+{
+    coroutine_t *co = (coroutine_t *)args;
+    sched_co_resume(co);
+
     return NULL;
 }
 

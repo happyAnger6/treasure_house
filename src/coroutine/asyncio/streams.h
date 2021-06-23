@@ -5,7 +5,9 @@
 extern "C"{
 #endif
 
-void asyncio_open_connection(char *host, int port);
+#include "asyncio.h"
+
+ASYNC void asyncio_open_connection(char *host, int port);
 
 #ifdef __cplusplus
 }

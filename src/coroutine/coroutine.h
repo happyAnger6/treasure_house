@@ -37,8 +37,8 @@ extern coroutine_t* coroutine_create(coroutine_func co_fn, void *args);
 extern int coroutine_yield();
 extern int coroutine_loop();
 extern void coroutine_destory(coroutine_t *co);
-
 extern void coroutine_await(future_t future);
+
 #ifdef __cplusplus
 }
 #endif

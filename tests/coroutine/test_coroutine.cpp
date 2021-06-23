@@ -58,7 +58,7 @@ static void co_nosleep(void *args)
 
 TEST(coroutine_run, co_sleep) 
 {
-    coroutine_init();
+    coroutine_init(PROCESSORS_INVALID_NUM);
     coroutine_create(co_sleep, NULL);
     coroutine_create(co_nosleep, NULL);
 

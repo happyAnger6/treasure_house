@@ -4,13 +4,17 @@
 #ifdef __cplusplus
 extern "C"{
 #endif
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
 
 #include <pthread.h>
 
+#include "threadpool.h"
 #include "coroutine.h"
 #include "coroutine_sched.h"
-
 #include "sync.h"
+#include "future.h"
 
 typedef struct {
     pthread_t os_thread;
@@ -19,6 +23,7 @@ typedef struct {
 
 typedef struct {
     processor_t *all_p;
+    struct threadpool *executor; //used for blocked API, for example, getaddrinfo.
     wait_group_t wg; // control all croutines
     int p_nums;
     int p_turn;
@@ -42,6 +47,10 @@ extern processors_t* processors_create();
 /* Wait for all processor_t in processors_t ended.*/
 extern void processors_join();
 
+extern int processors_set_maxprocs(int max_procs);
+
+extern int processors_get_maxprocs();
+
 /* Submit a coroutine to processors_t. processors_t will assign an
 ** approciate processor_t to coroutine.
 */
@@ -58,6 +67,14 @@ extern void processors_set_sched(sched_t *sched);
 extern sched_t* processors_get_sched();
 
 extern void processors_coroutine_done();
+
+
+extern ASYNC int processors_getaddrinfo(const char *node, const char *service,
+        const struct addrinfo *hints, struct addrinfo **res);
+
+extern future_t processors_create_co_future();
+
+extern ASYNC void processors_await();
 
 #ifdef __cplusplus
 }

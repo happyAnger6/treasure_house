@@ -53,12 +53,17 @@ extern void sched_sched(sched_t *sched, coroutine_t *co);
 extern void sched_yield_coroutine(sched_t *sched);
 extern void sched_stop(sched_t *sched);
 extern void sched_wakeup(sched_t *sched);
+extern void sched_await_coroutine(sched_t *sched);
+
+/* resume a co because co is reReady.*/
+extern void* sched_co_resume(void *args);
 
 extern int32_t sched_coroutine_nums(sched_t *sched);
 
 /* Delay current running coroutine delay_ms ms.*/
 extern void sched_delay(sched_t *sched, long delay_ms);
 
+/*asyncio lib api*/
 #ifdef __cplusplus
 }
 #endif
