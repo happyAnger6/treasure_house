@@ -178,6 +178,12 @@ ctest --verbose
 
 ## 6. todo list
 
++ 支持通过线程池执行阻塞C api,如getaddrinfo
 + 支持在非processor_t上下文创建协程
 + 支持future, 在异步回调代码和同步协程代码之间提供桥接, 一般不将future暴露给api使用者.
 + 支持socket协程同步操作, connect, accept, recv, send
+
+## 7. 回调式编程的一些缺点
+
++ 代码流程分散,不易阅读
++ 增加了内存管理和异常管理的复杂性,容易遗漏内存释放等问题

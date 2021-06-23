@@ -8,6 +8,7 @@ extern "C"{
 #include <stdint.h>
 
 #define ASYNC
+#define AWAIT
 
 extern void asyncio_sleep(long delay_ms);
 
