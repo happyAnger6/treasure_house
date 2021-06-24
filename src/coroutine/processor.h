@@ -82,7 +82,6 @@ extern ASYNC void processors_await();
 /* Return current event_loop*/
 extern event_loop_t processors_get_event_loop();
 
-
 #ifdef __cplusplus
 }
 #endif
