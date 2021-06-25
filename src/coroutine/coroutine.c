@@ -9,9 +9,9 @@
 #include "coroutine.h"
 #include "processor.h"
 
-static coroutine_t* _co_new(coroutine_func fn, void *args)
+static coroutine_t _co_new(coroutine_func fn, void *args)
 {
-    coroutine_t *co = (coroutine_t *)malloc(sizeof(coroutine_t));
+    coroutine_t co = (coroutine_t )malloc(sizeof(struct coroutine));
     if(co == NULL)
         error_exit("co new failed!");
 
@@ -28,10 +28,10 @@ static coroutine_t* _co_new(coroutine_func fn, void *args)
     return co;
 }
 
-coroutine_t* coroutine_create(coroutine_func co_fn, void *args)
+coroutine_t coroutine_create(coroutine_func co_fn, void *args)
 {
-    coroutine_t *co =  _co_new(co_fn, args);
-    processors_submit( co);
+    coroutine_t co =  _co_new(co_fn, args);
+    processors_submit(co);
     return co;
 }
 
@@ -54,7 +54,7 @@ int coroutine_yield()
     return 0;
 }
 
-void coroutine_destory(coroutine_t *co)
+void coroutine_destory(coroutine_t co)
 {
     assert(co != NULL);
     free(co);

@@ -16,6 +16,7 @@ extern "C"{
 #include "sync.h"
 #include "future.h"
 #include "event_loop.h"
+#include "asyncio/server.h"
 
 typedef struct {
     pthread_t os_thread;
@@ -55,7 +56,7 @@ extern int processors_get_maxprocs();
 /* Submit a coroutine to processors_t. processors_t will assign an
 ** approciate processor_t to coroutine.
 */
-extern void processors_submit(coroutine_t *co);
+extern void processors_submit(coroutine_t co);
 
 /* Suspend current coroutine 
 ** s_type: suspend type. suspend_type_t
@@ -63,7 +64,7 @@ extern void processors_submit(coroutine_t *co);
 */
 extern void processors_suspend(suspend_type_t s_type, void *args);
 
-extern void processors_set_sched(sched_t *sched);
+extern void processors_set_sched(sched_t sched);
 
 extern sched_t* processors_get_sched();
 
@@ -81,6 +82,8 @@ extern ASYNC void processors_await();
 
 /* Return current event_loop*/
 extern event_loop_t processors_get_event_loop();
+
+extern int processors_add_server(server_t *server);
 
 #ifdef __cplusplus
 }
