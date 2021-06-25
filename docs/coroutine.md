@@ -1,5 +1,6 @@
 # C语言协程库实现说明
 [代码实现](https://github.com/happyAnger6/treasure_house/tree/master/src/coroutine)
+[一些细节](./coroutine_impl.md)
 
 ## 1. 当前支持的功能概览
 
@@ -179,6 +180,7 @@ ctest --verbose
 ## 6. todo list
 
 + 支持通过线程池执行阻塞C api,如getaddrinfo
++ 优化当前sched, coroutine获取方式,使用线程私有存储
 + 支持在非processor_t上下文创建协程
 + 支持future, 在异步回调代码和同步协程代码之间提供桥接, 一般不将future暴露给api使用者.
 + 支持socket协程同步操作, connect, accept, recv, send

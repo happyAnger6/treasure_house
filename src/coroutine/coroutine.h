@@ -8,6 +8,7 @@ extern "C"{
 #include <stdint.h>
 
 #include "list.h"
+#include "wait.h"
 
 #include <ucontext.h>
 
@@ -18,10 +19,11 @@ typedef enum {
     CO_RUNNABLE,
     CO_RUNNINE,
     CO_WAITING,
+    CO_UNINTERRUPTIBLE,
     CO_END
 } CO_STATUS;
 
-typedef struct {
+typedef struct coroutine {
     void *sched;
     struct list_head list;
     ucontext_t uctx;
@@ -30,14 +32,20 @@ typedef struct {
     void *fn_data;
     coroutine_func fn;
     CO_STATUS status;
-} coroutine_t;
+} *coroutine_t;
 
 extern int coroutine_init();
-extern coroutine_t* coroutine_create(coroutine_func co_fn, void *args);
+extern coroutine_t coroutine_create(coroutine_func co_fn, void *args);
 extern int coroutine_yield();
 extern int coroutine_loop();
-extern void coroutine_destory(coroutine_t *co);
+extern void coroutine_destory(coroutine_t co);
 extern void coroutine_await(future_t future);
+
+/* api control current coroutine, like linux kernel current.
+ * todo: optimize current use thread local data.
+*/
+extern coroutine_t coroutine_current();
+void coroutine_set_current_state(int state);
 
 #ifdef __cplusplus
 }

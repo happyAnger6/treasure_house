@@ -33,7 +33,7 @@ static void _del_wg()
     wait_group_done(g_ps->wg);
 }
 
-void processors_set_sched(sched_t *sched)
+void processors_set_sched(sched_t sched)
 {
     if(pthread_getspecific(proc_key) == NULL)
         pthread_setspecific(proc_key, (void *)sched);
@@ -95,7 +95,7 @@ processors_t* processors_create()
             error_exit("sched creat failed!!!\r\n");
            
         proc->sched = sched;
-        if(pthread_create(&proc->os_thread, NULL, sched_run, (void *)sched) != 0)
+        if(pthread_create(&proc->os_thread, NULL, sched_run_entry, (void *)sched) != 0)
             error_exit("pthread create failed!!!\r\n");
     }
 
@@ -147,7 +147,7 @@ void processors_join()
     threadpool_shutdown(g_ps->executor, WAIT_ALL_DONE, NULL);
 }
 
-void processors_submit(coroutine_t *co)
+void processors_submit(coroutine_t co)
 {
     processor_t *proc = NULL;
     proc = &g_ps->all_p[g_ps->p_turn];
