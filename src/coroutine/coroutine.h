@@ -19,9 +19,13 @@ typedef enum {
     CO_RUNNABLE,
     CO_RUNNINE,
     CO_WAITING,
+    CO_INTERRUPTIBLE,
     CO_UNINTERRUPTIBLE,
     CO_END
 } CO_STATUS;
+
+/* Convenience macros for the sake of wake_up(): */
+#define CO_NORMAL (CO_INTERRUPTIBLE | CO_UNINTERRUPTIBLE)
 
 typedef struct coroutine {
     void *sched;

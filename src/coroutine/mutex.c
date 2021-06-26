@@ -26,44 +26,15 @@ int co_mutex_init(co_mutex_t *mutex)
 
 int co_mutex_lock(co_mutex_t *mutex)
 {
-    DEFINE_WAIT(wait);
+    wait_event(&mutex->wq, atm_rel_cas(&mutex->used, 0, 1));
 
-    while (!atm_rel_cas(&mutex->used, 0, 1)) {
-
-        /* wait and unlock must in guard to avoid race when lock failed*/
-        co_spin_lock(&mutex->guard);
-        if (!atm_rel_cas(&mutex->used, 0, 1)) { /* coroutine unlocked during time window*/
-            co_spin_unlock(&mutex->guard);
-            break;
-        }
-
-        prepare_to_wait(&mutex->wq, &wait, CO_UNINTERRUPTIBLE);
-        co_spin_unlock(&mutex->guard);
-
-        /* 
-         * during schedule another courinte_t may acquire mutex, 
-         * so when wakeup must recheck mutex->used
-         */
-        sched_schedule(); 
-    }
-
-    finish_wait(&mutex->wq, &wait);
     return 0;
 }
 
 int co_mutex_unlock(co_mutex_t *mutex)
 {
-    /* unlock and wait must in guard to avoid race when lock failed*/
-    co_spin_lock(&mutex->guard);
-    
     atm_rel_store(&mutex->used, 0);
-
-    /* 
-     * during wakeup another coroutine may acquire mutex_t, 
-     * so coroutine be wakeuped must recheck mutex
-     */
     wake_up(&mutex->wq);
-
-    co_spin_unlock(&mutex->guard);
+    
     return 0;
 }

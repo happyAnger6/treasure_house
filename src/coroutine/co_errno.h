@@ -1,0 +1,6 @@
+#ifndef _COROUTINE_ERRNO_H
+#define _COROUTINE_ERRNO_H
+
+#define ERESTARTSYS	512
+
+#endif
