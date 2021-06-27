@@ -16,10 +16,7 @@ extern "C"{
 #include "sync.h"
 #include "future.h"
 #include "event_loop.h"
-<<<<<<< HEAD
-=======
 #include "asyncio/server.h"
->>>>>>> 9bfaf0ad2da8a0857aad24dee7963ccad19eb67b
 
 typedef struct {
     pthread_t os_thread;
@@ -87,6 +84,12 @@ extern ASYNC void processors_await();
 extern event_loop_t processors_get_event_loop();
 
 extern int processors_add_server(server_t *server);
+
+
+/* event_loop api*/
+extern int event_loop_add_reader(int fd, event_callback cb, void *args);
+
+extern int event_loop_remove_reader(int fd)
 
 #ifdef __cplusplus
 }

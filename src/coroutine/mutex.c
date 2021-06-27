@@ -27,14 +27,13 @@ int co_mutex_init(co_mutex_t *mutex)
 int co_mutex_lock(co_mutex_t *mutex)
 {
     wait_event(&mutex->wq, atm_rel_cas(&mutex->used, 0, 1));
-
     return 0;
 }
 
 int co_mutex_unlock(co_mutex_t *mutex)
 {
     atm_rel_store(&mutex->used, 0);
-    wake_up(&mutex->wq);
+    wake_up(&mutex->wq, WQ_FLAG_EXCLUSIVE);
     
     return 0;
 }

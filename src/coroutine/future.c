@@ -42,11 +42,11 @@ int future_set_result(future_t future, void *result)
 {
     _future_t *f = (_future_t *)future;
     f->result = result;
+    f->status = FINISHED; // must set before done_callback, because done_ballback may wake_up future_await.
 
     if (f->done_callback)
         f->done_callback(f->done_args);
 
-    f->status = FINISHED;
     return 0;
 }
 
@@ -58,7 +58,7 @@ int future_done(future_t future)
 ASYNC void* future_await(future_t future)
 {
     _future_t *f = (_future_t *)future;
-    if (f->result != FINISHED)
+    if (f->status != FINISHED)
         AWAIT processors_await();
 
     void* result = future_get_result(future);

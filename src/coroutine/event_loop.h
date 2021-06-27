@@ -14,10 +14,6 @@ extern int event_loop_run(event_loop_t ev_loop, long expired_ms);
 
 extern void event_loop_destory(event_loop_t ev_loop);
 
-extern int event_loop_add_reader(int fd, event_callback cb, void *args);
-
-extern int event_loop_remove_reader(int fd);
-
 #ifdef __cplusplus
 }
 #endif

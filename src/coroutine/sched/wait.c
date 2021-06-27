@@ -55,17 +55,19 @@ void finish_wait(wait_queue_head_t *q, wait_queue_t *wait)
     co_spin_unlock(&q->lock);
 }
 
-static void __wake_up_common_lock(struct wait_queue_head *wq_head, unsigned int mode,
-            int nr_exclusive, int wake_flags, void *key)
+static 
+static void __wake_up_locked(struct wait_queue_head *wq_head, int wake_flags)
 {
-    unsigned long flags;
-    co_spin_lock(&wq_head->lock);
-    nr_exclusive = __wake_up_common(wq_head, mode, nr_exclusive, wake_flags, key);
-    co_spin_unlock(&wq_head->lock);
+    wait_queue_t *curr, *next;
+    list_for_each_entry_safe(curr, next, &wq_head->task_list, task_list) {
+        if (curr->func(curr, wake_flags) && (wake_flags & WQ_FLAG_EXCLUSIVE))
+            break;
+    }
 }
 
-void __wake_up(struct wait_queue_head *wq_head, unsigned int mode,
-    int nr_exclusive, void *key)
+void __wake_up(struct wait_queue_head *wq_head, int wake_flags)
 {
-    __wake_up_common_lock(wq_head, mode, nr_exclusive, 0, key);
+    co_spin_lock(&wq_head->lock);
+    __wake_up_locked(wq_head, wake_flags);
+    co_spin_unlock(&wq_head->lock);
 }

@@ -1,5 +1,5 @@
-#ifndef _WAIT_H
-#define _WAIT_H
+#ifndef _COROUTINE_SCHED_WAIT_H
+#define _COROUTINE_SCHED_WAIT_H
 
 #ifdef __cplusplus
 extern "C"{
@@ -52,8 +52,7 @@ extern void init_wait_entry(wait_queue_t *wait, int flags);
 extern void finish_wait(wait_queue_head_t *q, wait_queue_t *wait);
 
 #define ___wait_is_interruptible(state)\
-    (!__builtin_constant_p(state) ||\
-        state == TASK_INTERRUPTIBLE || state == TASK_KILLABLE)\
+    (!__builtin_constant_p(state) || state == CO_INTERRUPTIBLE ) 
 
 #define ___wait_event(wq_head, condition, state, exclusive, ret, cmd)\
 ({                                                                   \
@@ -80,7 +79,7 @@ __out:__ret;\
 })
 
 #define __wait_event(wq_head, condition)					\
-    (void)___wait_event(wq_head, condition, TASK_UNINTERRUPTIBLE, 0, 0,	\
+    (void)___wait_event(wq_head, condition, CO_UNINTERRUPTIBLE, 0, 0,	\
                 schedule())
 
 #define wait_event(wq_head, condition)\
@@ -90,7 +89,8 @@ do {\
     __wait_event(wq_head, condition);\
 } while (0)
 
-#define wake_up(x) __wake_up(x, CO_NORMAL, 1, NULL)
+void __wake_up(struct wait_queue_head *wq_head, int wake_flags);
+#define wake_up(x, wake_flags) __wake_up(x, wake_flags)
 
 
 #ifdef __cplusplus

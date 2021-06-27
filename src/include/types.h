@@ -5,6 +5,8 @@
 extern "C"{
 #endif
 
+#include "bitops.h"
+
 typedef signed char s8;
 typedef unsigned char u8;
 
@@ -34,6 +36,9 @@ typedef unsigned gfp_t;
 #define MIN(a, b) ((a)<(b) ? (a):(b))
 
 #define  noinline   __attribute__((noinline))
+
+#define DECLARE_BITMAP(name, bits) \
+    unsigned long name[BITS_TO_LONGS(bits)]
 
 #ifdef __cplusplus
 }
