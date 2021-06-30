@@ -47,6 +47,7 @@ static inline void _add_wait_queue_tail(wait_queue_head_t *head, wait_queue_t *n
     list_add_tail(&new->task_list, &head->task_list);
 }
 
+extern void wait_queue_head_init(wait_queue_head_t *head);
 extern void prepare_to_wait(wait_queue_head_t *q, wait_queue_t *wait, int state);
 extern void init_wait_entry(wait_queue_t *wait, int flags);
 extern void finish_wait(wait_queue_head_t *q, wait_queue_t *wait);
@@ -79,7 +80,7 @@ __out:__ret;\
 })
 
 #define __wait_event(wq_head, condition)					\
-    (void)___wait_event(wq_head, condition, CO_UNINTERRUPTIBLE, 0, 0,	\
+    (void)___wait_event(wq_head, condition, CO_UNINTERRUPTIBLE, 0, 1,	\
                 schedule())
 
 #define wait_event(wq_head, condition)\

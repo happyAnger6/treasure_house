@@ -3,6 +3,12 @@
 #include "signal.h"
 #include "co_errno.h"
 
+void wait_queue_head_init(wait_queue_head_t *head)
+{
+    co_spin_init(&head->spin_lock);
+    LIST_HEAD_INIT(head->task_list);
+}
+
 void init_wait_entry(wait_queue_t *wait, int flags)
 {
     wait->flags = flags;
